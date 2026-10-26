@@ -1,7 +1,12 @@
+using Web_Dinosaurios.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Acceso a datos: fábrica de conexiones SQLite (singleton).
+builder.Services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>();
 
 var app = builder.Build();
 
