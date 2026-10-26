@@ -39,6 +39,23 @@ public class DinosaurioRepository : IDinosaurioRepository
         WHERE Id = @Id;
         """;
 
+    private const string SqlBuscar = """
+        SELECT Id,
+               Nombre,
+               Periodo,
+               Antiguedad,
+               Region,
+               Dieta,
+               Descripcion,
+               ImagenUrl,
+               CreditoImagen,
+               FuenteUrl
+        FROM Dinosaurios
+        WHERE (@Nombre IS NULL OR Nombre LIKE '%' || @Nombre || '%')
+          AND (@Periodo IS NULL OR Periodo = @Periodo)
+        ORDER BY Nombre;
+        """;
+
     private readonly IDbConnectionFactory _connectionFactory;
 
     public DinosaurioRepository(IDbConnectionFactory connectionFactory)
@@ -66,5 +83,21 @@ public class DinosaurioRepository : IDinosaurioRepository
             new { Id = id });
 
         return dinosaurio;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<Dinosaurio>> BuscarAsync(string? nombre, string? periodo)
+    {
+        using var connection = _connectionFactory.CrearConexion();
+
+        var parametros = new
+        {
+            Nombre = string.IsNullOrWhiteSpace(nombre) ? null : nombre.Trim(),
+            Periodo = string.IsNullOrWhiteSpace(periodo) ? null : periodo.Trim()
+        };
+
+        var dinosaurios = await connection.QueryAsync<Dinosaurio>(SqlBuscar, parametros);
+
+        return dinosaurios.AsList();
     }
 }

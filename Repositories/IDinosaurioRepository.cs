@@ -17,4 +17,13 @@ public interface IDinosaurioRepository
     /// </summary>
     /// <param name="id">Identificador del dinosaurio.</param>
     Task<Dinosaurio?> ObtenerPorIdAsync(int id);
+
+    /// <summary>
+    /// Busca dinosaurios por coincidencia parcial de nombre y por periodo exacto.
+    /// Los filtros son opcionales: si llegan <c>null</c> o vacíos se ignoran.
+    /// </summary>
+    /// <param name="nombre">Texto a buscar dentro del nombre (coincidencia parcial).</param>
+    /// <param name="periodo">Periodo geológico exacto por el que filtrar.</param>
+    /// <returns>Lista de dinosaurios ordenada por <see cref="Dinosaurio.Nombre"/>.</returns>
+    Task<IReadOnlyList<Dinosaurio>> BuscarAsync(string? nombre, string? periodo);
 }
