@@ -24,6 +24,21 @@ public class DinosaurioRepository : IDinosaurioRepository
         ORDER BY Nombre;
         """;
 
+    private const string SqlObtenerPorId = """
+        SELECT Id,
+               Nombre,
+               Periodo,
+               Antiguedad,
+               Region,
+               Dieta,
+               Descripcion,
+               ImagenUrl,
+               CreditoImagen,
+               FuenteUrl
+        FROM Dinosaurios
+        WHERE Id = @Id;
+        """;
+
     private readonly IDbConnectionFactory _connectionFactory;
 
     public DinosaurioRepository(IDbConnectionFactory connectionFactory)
@@ -39,5 +54,17 @@ public class DinosaurioRepository : IDinosaurioRepository
         var dinosaurios = await connection.QueryAsync<Dinosaurio>(SqlObtenerTodos);
 
         return dinosaurios.AsList();
+    }
+
+    /// <inheritdoc />
+    public async Task<Dinosaurio?> ObtenerPorIdAsync(int id)
+    {
+        using var connection = _connectionFactory.CrearConexion();
+
+        var dinosaurio = await connection.QuerySingleOrDefaultAsync<Dinosaurio>(
+            SqlObtenerPorId,
+            new { Id = id });
+
+        return dinosaurio;
     }
 }

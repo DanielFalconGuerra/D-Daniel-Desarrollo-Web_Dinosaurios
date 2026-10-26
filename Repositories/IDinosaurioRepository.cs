@@ -11,4 +11,10 @@ public interface IDinosaurioRepository
     /// Devuelve todos los dinosaurios del catálogo ordenados por <see cref="Dinosaurio.Nombre"/>.
     /// </summary>
     Task<IReadOnlyList<Dinosaurio>> ObtenerTodosAsync();
+
+    /// <summary>
+    /// Devuelve el dinosaurio con el identificador indicado o <c>null</c> si no existe.
+    /// </summary>
+    /// <param name="id">Identificador del dinosaurio.</param>
+    Task<Dinosaurio?> ObtenerPorIdAsync(int id);
 }
