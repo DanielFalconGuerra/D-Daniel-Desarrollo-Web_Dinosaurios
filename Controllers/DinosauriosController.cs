@@ -9,6 +9,11 @@ namespace Web_Dinosaurios.Controllers;
 /// </summary>
 public class DinosauriosController : Controller
 {
+    /// <summary>
+    /// Periodos geológicos admitidos por el filtro del catálogo.
+    /// </summary>
+    private static readonly string[] PeriodosValidos = { "Jurásico", "Cretácico" };
+
     private readonly IDinosaurioRepository _repository;
 
     public DinosauriosController(IDinosaurioRepository repository)
@@ -17,12 +22,22 @@ public class DinosauriosController : Controller
     }
 
     /// <summary>
-    /// GET: /Dinosaurios
-    /// Muestra el listado completo del catálogo.
+    /// GET: /Dinosaurios?nombre=...&amp;periodo=...
+    /// Muestra el listado del catálogo aplicando los filtros opcionales.
     /// </summary>
-    public async Task<IActionResult> Index()
+    /// <param name="nombre">Texto de búsqueda por nombre; se recorta y se ignora si está vacío.</param>
+    /// <param name="periodo">Periodo geológico; solo se aceptan «Jurásico» y «Cretácico».</param>
+    public async Task<IActionResult> Index(string? nombre, string? periodo)
     {
-        IReadOnlyList<Dinosaurio> dinosaurios = await _repository.ObtenerTodosAsync();
+        nombre = NormalizarTexto(nombre);
+        periodo = NormalizarPeriodo(periodo);
+
+        IReadOnlyList<Dinosaurio> dinosaurios = await _repository.BuscarAsync(nombre, periodo);
+
+        ViewData["NombreActual"] = nombre;
+        ViewData["PeriodoActual"] = periodo;
+        ViewData["PeriodosValidos"] = PeriodosValidos;
+
         return View(dinosaurios);
     }
 
@@ -40,5 +55,42 @@ public class DinosauriosController : Controller
         }
 
         return View(dinosaurio);
+    }
+
+    /// <summary>
+    /// Recorta el texto y devuelve <c>null</c> cuando queda vacío.
+    /// </summary>
+    private static string? NormalizarTexto(string? valor)
+    {
+        if (string.IsNullOrWhiteSpace(valor))
+        {
+            return null;
+        }
+
+        string recortado = valor.Trim();
+        return recortado.Length == 0 ? null : recortado;
+    }
+
+    /// <summary>
+    /// Valida el periodo contra la lista admitida y devuelve su forma canónica.
+    /// Cualquier otro valor se ignora (<c>null</c>).
+    /// </summary>
+    private static string? NormalizarPeriodo(string? periodo)
+    {
+        string? recortado = NormalizarTexto(periodo);
+        if (recortado is null)
+        {
+            return null;
+        }
+
+        foreach (string valido in PeriodosValidos)
+        {
+            if (string.Equals(valido, recortado, StringComparison.OrdinalIgnoreCase))
+            {
+                return valido;
+            }
+        }
+
+        return null;
     }
 }
