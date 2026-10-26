@@ -25,4 +25,20 @@ public class DinosauriosController : Controller
         IReadOnlyList<Dinosaurio> dinosaurios = await _repository.ObtenerTodosAsync();
         return View(dinosaurios);
     }
+
+    /// <summary>
+    /// GET: /Dinosaurios/Detalle/5
+    /// Muestra la ficha completa de un dinosaurio o 404 si no existe.
+    /// </summary>
+    /// <param name="id">Identificador del dinosaurio.</param>
+    public async Task<IActionResult> Detalle(int id)
+    {
+        Dinosaurio? dinosaurio = await _repository.ObtenerPorIdAsync(id);
+        if (dinosaurio is null)
+        {
+            return NotFound();
+        }
+
+        return View(dinosaurio);
+    }
 }

@@ -35,7 +35,10 @@ else
                             <span class="badge bg-secondary me-1">@dinosaurio.Periodo</span>
                             <span class="badge bg-success">@dinosaurio.Dieta</span>
                         </div>
-                        <p class="card-text text-secondary mb-0">@dinosaurio.Descripcion</p>
+                        <p class="card-text text-secondary mb-3">@dinosaurio.Descripcion</p>
+                        <a class="btn btn-primary mt-auto align-self-start"
+                           asp-action="Detalle"
+                           asp-route-id="@dinosaurio.Id">Ver detalle</a>
                     </div>
                 </div>
             </div>
