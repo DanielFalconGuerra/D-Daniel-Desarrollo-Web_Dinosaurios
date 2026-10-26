@@ -2,6 +2,10 @@
 
 @{
     ViewData["Title"] = "Catálogo de dinosaurios";
+
+    var nombreFiltro = Context.Request.Query["nombre"].ToString();
+    var periodoFiltro = Context.Request.Query["periodo"].ToString();
+    var hayFiltros = !string.IsNullOrWhiteSpace(nombreFiltro) || !string.IsNullOrWhiteSpace(periodoFiltro);
 }
 
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
@@ -12,11 +16,47 @@
     <a class="btn btn-outline-secondary" asp-controller="Home" asp-action="Index">Volver al inicio</a>
 </div>
 
+<form method="get" asp-action="Index" class="card card-body shadow-sm mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-5">
+            <label for="nombre" class="form-label">Nombre</label>
+            <input type="text"
+                   class="form-control"
+                   id="nombre"
+                   name="nombre"
+                   value="@nombreFiltro"
+                   placeholder="Buscar por nombre..." />
+        </div>
+        <div class="col-12 col-md-3">
+            <label for="periodo" class="form-label">Periodo</label>
+            <select class="form-select" id="periodo" name="periodo">
+                <option value="" selected="@(string.IsNullOrEmpty(periodoFiltro) ? "selected" : null)">Todos</option>
+                <option value="Jurásico" selected="@(periodoFiltro == "Jurásico" ? "selected" : null)">Jurásico</option>
+                <option value="Cretácico" selected="@(periodoFiltro == "Cretácico" ? "selected" : null)">Cretácico</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+            <a class="btn btn-outline-secondary" asp-action="Index">Limpiar</a>
+        </div>
+    </div>
+</form>
+
 @if (Model.Count == 0)
 {
-    <div class="alert alert-info" role="alert">
-        Todavía no hay dinosaurios en el catálogo.
-    </div>
+    if (hayFiltros)
+    {
+        <div class="alert alert-warning" role="alert">
+            No se encontraron dinosaurios que coincidan con los filtros aplicados.
+            Probá con otro nombre o periodo, o usá «Limpiar» para ver el catálogo completo.
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info" role="alert">
+            Todavía no hay dinosaurios en el catálogo.
+        </div>
+    }
 }
 else
 {
