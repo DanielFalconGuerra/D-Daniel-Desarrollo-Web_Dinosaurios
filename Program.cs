@@ -10,6 +10,9 @@ builder.Services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>();
 
 var app = builder.Build();
 
+// Base de datos lista (App_Data, esquema y semilla) antes de atender peticiones.
+await DatabaseInitializer.InicializarAsync(app.Configuration);
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
