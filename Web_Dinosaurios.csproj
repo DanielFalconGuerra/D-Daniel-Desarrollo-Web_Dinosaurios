@@ -11,4 +11,8 @@
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.33" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Data\*.sql" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
