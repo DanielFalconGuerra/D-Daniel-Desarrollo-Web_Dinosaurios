@@ -14,9 +14,11 @@ builder.Services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>();
 builder.Services.AddScoped<IDinosaurioRepository, DinosaurioRepository>();
 
 // Cliente HTTP tipado de la Paleobiology Database (importación del catálogo).
+// La PBDB responde 403 a las peticiones sin User-Agent, así que el proyecto se identifica.
 builder.Services.AddHttpClient<PbdbCliente>(cliente =>
 {
     cliente.Timeout = TimeSpan.FromSeconds(120);
+    cliente.DefaultRequestHeaders.UserAgent.ParseAdd("Web_Dinosaurios/1.0 (https://github.com/DanielFalconGuerra/D-Daniel-Desarrollo-Web_Dinosaurios)");
 });
 
 // Cliente HTTP tipado de Wikipedia (descripciones del catálogo importado).

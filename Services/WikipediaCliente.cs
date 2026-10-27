@@ -14,7 +14,8 @@ namespace Web_Dinosaurios.Services;
 /// <list type="bullet">
 ///   <item>Lotes de 20 títulos por llamada (<c>exlimit=20</c>).</item>
 ///   <item>250 ms de espera entre lotes.</item>
-///   <item>Cabecera <c>User-Agent</c> obligatoria (sin ella Wikipedia rechaza la llamada).</item>
+///   <item>Cabecera <c>User-Agent</c> con la URL del repositorio (política de Wikimedia; con un agente genérico responde 429).</item>
+///   <item>Ante un 429 se espera lo que indique <c>Retry-After</c> y se reintenta hasta <see cref="MaxReintentos"/> veces.</item>
 ///   <item>Se resuelven <c>query.normalized</c> y <c>query.redirects</c> para volver del título final al género pedido.</item>
 ///   <item>Se eliminan los caracteres invisibles <c>\u200B</c> y los espacios repetidos.</item>
 /// </list>
@@ -24,10 +25,12 @@ namespace Web_Dinosaurios.Services;
 public sealed class WikipediaCliente
 {
     private const string UrlApi = "https://es.wikipedia.org/w/api.php";
-    private const string UserAgent = "Web_Dinosaurios/1.0 (proyecto de aprendizaje)";
+    private const string UserAgent = "Web_Dinosaurios/1.0 (https://github.com/DanielFalconGuerra/D-Daniel-Desarrollo-Web_Dinosaurios)";
     private const int TamanoLote = 20;
+    private const int MaxReintentos = 3;
 
     private static readonly TimeSpan EsperaEntreLotes = TimeSpan.FromMilliseconds(250);
+    private static readonly TimeSpan EsperaPorDefecto429 = TimeSpan.FromSeconds(5);
 
     /// <summary>Carácter invisible (U+200B) que la API devuelve dentro de algunos extractos.</summary>
     private const string CaracterInvisible = "\u200B";
@@ -104,14 +107,7 @@ public sealed class WikipediaCliente
         var url = $"{UrlApi}?action=query&format=json&prop=extracts&exintro=1&explaintext=1" +
                   $"&exsentences=2&exlimit={TamanoLote}&redirects=1&titles={titulos}";
 
-        using var solicitud = new HttpRequestMessage(HttpMethod.Get, url);
-        solicitud.Headers.TryAddWithoutValidation("User-Agent", UserAgent);
-        solicitud.Headers.TryAddWithoutValidation("Accept", "application/json");
-
-        using var respuesta = await _http.SendAsync(solicitud, cancelacion);
-        respuesta.EnsureSuccessStatusCode();
-
-        var cuerpo = await respuesta.Content.ReadAsStringAsync(cancelacion);
+        var cuerpo = await DescargarAsync(url, cancelacion);
 
         var alias = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var paginas = new Dictionary<string, ResumenWikipedia>(StringComparer.OrdinalIgnoreCase);
@@ -160,6 +156,31 @@ public sealed class WikipediaCliente
         }
 
         return (alias, paginas);
+    }
+
+    /// <summary>
+    /// Hace la petición GET y, si Wikipedia responde 429, espera lo que pida <c>Retry-After</c>
+    /// antes de reintentar. Cualquier otro error (o agotar los reintentos) lanza la excepción.
+    /// </summary>
+    private async Task<string> DescargarAsync(string url, CancellationToken cancelacion)
+    {
+        for (var intento = 0; ; intento++)
+        {
+            using var solicitud = new HttpRequestMessage(HttpMethod.Get, url);
+            solicitud.Headers.TryAddWithoutValidation("User-Agent", UserAgent);
+            solicitud.Headers.TryAddWithoutValidation("Accept", "application/json");
+
+            using var respuesta = await _http.SendAsync(solicitud, cancelacion);
+            if (respuesta.StatusCode == System.Net.HttpStatusCode.TooManyRequests && intento < MaxReintentos)
+            {
+                var espera = respuesta.Headers.RetryAfter?.Delta ?? EsperaPorDefecto429;
+                await Task.Delay(espera, cancelacion);
+                continue;
+            }
+
+            respuesta.EnsureSuccessStatusCode();
+            return await respuesta.Content.ReadAsStringAsync(cancelacion);
+        }
     }
 
     /// <summary>
