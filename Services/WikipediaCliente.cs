@@ -7,7 +7,7 @@ namespace Web_Dinosaurios.Services;
 /// <summary>
 /// Cliente de la API de Wikipedia en español que obtiene el extracto introductorio
 /// (dos frases) de los géneros importados desde la Paleobiology Database.
-/// Contrato: <c>docs/pbdb-importacion.md</c> §2 y §3.
+/// Contrato: <c>docs/pbdb-importacion.md</c> §2, §3 y §6.
 /// </summary>
 /// <remarks>
 /// Reglas del contrato:
@@ -18,9 +18,11 @@ namespace Web_Dinosaurios.Services;
 ///   <item>Ante un 429 se espera lo que indique <c>Retry-After</c> y se reintenta hasta <see cref="MaxReintentos"/> veces.</item>
 ///   <item>Se resuelven <c>query.normalized</c> y <c>query.redirects</c> para volver del título final al género pedido.</item>
 ///   <item>Se eliminan los caracteres invisibles <c>\u200B</c> y los espacios repetidos.</item>
+///   <item>No se envía <c>exsentences</c>: el recorte a dos frases y la validación temática los hace
+///         <see cref="TextoWikipedia"/> (§6, reglas 1 y 2).</item>
 /// </list>
-/// Solo se devuelven los géneros que tienen artículo con extracto no vacío, con clave igual
-/// al género solicitado y valor <c>(Titulo final, Extracto limpio)</c>.
+/// Solo se devuelven los géneros que tienen artículo con extracto no vacío y que trata de un dinosaurio,
+/// con clave igual al género solicitado y valor <c>(Titulo final, Extracto recortado)</c>.
 /// </remarks>
 public sealed class WikipediaCliente
 {
@@ -50,8 +52,9 @@ public sealed class WikipediaCliente
     /// <param name="generos">Nombres de género tal como llegan de la Paleobiology Database (p. ej. <c>Tyrannosaurus</c>).</param>
     /// <param name="cancelacion">Token opcional de cancelación.</param>
     /// <returns>
-    /// Diccionario indexado por el género solicitado; el valor es el título final del artículo
-    /// y el extracto limpio. Los géneros sin artículo (o con extracto vacío) no aparecen.
+    /// Diccionario indexado por el género solicitado; el valor es el título final del artículo y el
+    /// extracto recortado a dos frases (máximo 400 caracteres). Se omiten los géneros sin artículo, con
+    /// extracto vacío o cuyo texto no trata de un dinosaurio (§6, regla 2).
     /// </returns>
     public async Task<Dictionary<string, (string Titulo, string Extracto)>> ObtenerResumenesAsync(
         IReadOnlyList<string> generos,
@@ -89,7 +92,20 @@ public sealed class WikipediaCliente
                     continue;
                 }
 
-                resumenes[genero] = (pagina.Titulo, pagina.Extracto);
+                // §6 regla 2: el extracto debe hablar de un dinosaurio; si no, el género queda sin artículo.
+                if (!TextoWikipedia.TrataDeDinosaurio(pagina.Extracto))
+                {
+                    continue;
+                }
+
+                // §6 regla 1: dos frases y 400 caracteres, recortadas aquí y no con exsentences.
+                var extracto = TextoWikipedia.Recortar(pagina.Extracto);
+                if (extracto.Length == 0)
+                {
+                    continue;
+                }
+
+                resumenes[genero] = (pagina.Titulo, extracto);
             }
         }
 
@@ -105,7 +121,7 @@ public sealed class WikipediaCliente
     {
         var titulos = Uri.EscapeDataString(string.Join("|", lote));
         var url = $"{UrlApi}?action=query&format=json&prop=extracts&exintro=1&explaintext=1" +
-                  $"&exsentences=2&exlimit={TamanoLote}&redirects=1&titles={titulos}";
+                  $"&exlimit={TamanoLote}&redirects=1&titles={titulos}";
 
         var cuerpo = await DescargarAsync(url, cancelacion);
 
