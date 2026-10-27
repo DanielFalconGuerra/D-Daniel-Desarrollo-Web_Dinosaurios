@@ -272,6 +272,10 @@ Contenido de archivos relevantes:
 
 Tarea: {t['desc']}{rutas}"""
 
+    # Las guías de docs/ también van al revisor: lo que piden cuenta como cambio solicitado
+    spec = "\n\n".join(f"--- {a} ---\n{leer(PROYECTO / a)}" for a in t["archivos"]
+                       if a.startswith("docs/") and (PROYECTO / a).exists())
+
     comentarios = ""
     for intento in range(MAX_REINTENTOS + 1):
         log(f"  DeepSeek implementando (intento {intento + 1})...")
@@ -299,7 +303,10 @@ Tarea: {t['desc']}{rutas}"""
 Tarea solicitada: {t['desc']}
 Rutas pedidas: {', '.join(t['archivos']) or '(no especificadas)'}
 Rechaza si el diff crea o modifica archivos con rutas distintas a las pedidas, o si reescribe código
-ya existente que la tarea no pide cambiar.
+ya existente que la tarea no pide cambiar. Los cambios que exige la especificación cuentan como pedidos.
+
+Especificación de referencia (solo lectura):
+{spec or '(ninguna)'}
 
 Diff:
 {diff}

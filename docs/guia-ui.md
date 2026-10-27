@@ -117,7 +117,11 @@ Imagen: crédito (obligatorio) Leer en Wikipedia
 ## 7. Piso de calidad
 
 - Foco visible: `outline: 3px solid var(--dino-texto); outline-offset: 2px` en `:focus-visible`.
-- Sin animaciones de entrada ni efectos hover en cada fila; solo subrayado en enlaces al pasar el cursor.
+  **Sustituye** a la regla de la plantilla `.btn:focus, … { box-shadow: … #258cfb; }`: se elimina esa regla
+  (no se deja otra con `box-shadow: none`), y así solo hay un indicador de foco.
+- Enlaces: color `--dino-texto` y **subrayados siempre** en el texto (no se quita el subrayado de Bootstrap);
+  el menú y los botones siguen sin subrayado, como en Bootstrap.
+- Sin animaciones de entrada ni efectos hover en cada fila.
 - Respetar `@media (prefers-reduced-motion: reduce)`.
 - Estilos en `site.css` con clases `dino-*`. Nada de `style="..."` en línea en las vistas.
 - Probar a 375 px y a 1280 px de ancho.
