@@ -9,6 +9,8 @@ namespace Web_Dinosaurios.Repositories;
 /// </summary>
 public class DinosaurioRepository : IDinosaurioRepository
 {
+    private const string RutaIconoPorDefecto = "/images/dinosaurios/icono.svg";
+
     private const string SqlObtenerTodos = """
         SELECT Id,
                Nombre,
@@ -56,6 +58,8 @@ public class DinosaurioRepository : IDinosaurioRepository
         FROM Dinosaurios
         WHERE (@Nombre IS NULL OR Nombre LIKE '%' || @Nombre || '%')
           AND (@Periodo IS NULL OR Periodo LIKE @Periodo || '%')
+          AND (@Dieta IS NULL OR Dieta = @Dieta)
+          AND (@SoloConImagen = 0 OR ImagenUrl <> @RutaIcono)
         ORDER BY EdadMaxMa IS NULL,
                  EdadMaxMa ASC,
                  Nombre ASC
@@ -67,7 +71,9 @@ public class DinosaurioRepository : IDinosaurioRepository
         SELECT COUNT(*)
         FROM Dinosaurios
         WHERE (@Nombre IS NULL OR Nombre LIKE '%' || @Nombre || '%')
-          AND (@Periodo IS NULL OR Periodo LIKE @Periodo || '%');
+          AND (@Periodo IS NULL OR Periodo LIKE @Periodo || '%')
+          AND (@Dieta IS NULL OR Dieta = @Dieta)
+          AND (@SoloConImagen = 0 OR ImagenUrl <> @RutaIcono);
         """;
 
     private readonly IDbConnectionFactory _connectionFactory;
@@ -104,7 +110,9 @@ public class DinosaurioRepository : IDinosaurioRepository
         string? nombre,
         string? periodo,
         int pagina,
-        int tamano)
+        int tamano,
+        string? dieta = null,
+        bool soloConImagen = false)
     {
         if (pagina < 1)
         {
@@ -122,6 +130,9 @@ public class DinosaurioRepository : IDinosaurioRepository
         {
             Nombre = string.IsNullOrWhiteSpace(nombre) ? null : nombre.Trim(),
             Periodo = string.IsNullOrWhiteSpace(periodo) ? null : periodo.Trim(),
+            Dieta = string.IsNullOrWhiteSpace(dieta) ? null : dieta.Trim(),
+            SoloConImagen = soloConImagen ? 1 : 0,
+            RutaIcono = RutaIconoPorDefecto,
             Tamano = tamano,
             Desplazamiento = (long)(pagina - 1) * tamano
         };
