@@ -19,6 +19,12 @@ builder.Services.AddHttpClient<PbdbCliente>(cliente =>
     cliente.Timeout = TimeSpan.FromSeconds(120);
 });
 
+// Cliente HTTP tipado de Wikipedia (descripciones del catálogo importado).
+builder.Services.AddHttpClient<WikipediaCliente>(cliente =>
+{
+    cliente.Timeout = TimeSpan.FromSeconds(60);
+});
+
 var app = builder.Build();
 
 // Base de datos lista (App_Data, esquema y semilla) antes de atender peticiones.
