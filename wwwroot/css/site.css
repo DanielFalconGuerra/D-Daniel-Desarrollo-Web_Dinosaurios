@@ -1,3 +1,22 @@
+/* Estilos globales de Web_Dinosaurios. Contrato visual: docs/guia-ui.md */
+
+/* ---------------------------------------------------------------- Tokens (guía §3) */
+:root {
+  --dino-fondo: #F2F3EF;
+  --dino-superficie: #FFFFFF;
+  --dino-texto: #1E2B2F;
+  --dino-texto-suave: #55625F;
+  --dino-linea: #C9CFCB;
+  --dino-jurasico: #34B2C9;
+  --dino-jurasico-claro: #B3E3EE;
+  --dino-cretacico: #7FC64E;
+  --dino-cretacico-claro: #A6D84A;
+
+  --dino-fuente-titulos: "Archivo", system-ui, sans-serif;
+  --dino-fuente-texto: "Source Serif 4", Georgia, serif;
+}
+
+/* ---------------------------------------------------------------- Base */
 html {
   font-size: 14px;
 }
@@ -8,15 +27,386 @@ html {
   }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-
+/* El pie va al final del flujo (sin position: absolute) para que admita varias líneas */
 body {
-  margin-bottom: 60px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  font-family: var(--dino-fuente-texto);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: var(--dino-texto);
+  background-color: var(--dino-fondo);
+}
+
+body > .container {
+  flex: 1 0 auto;
+}
+
+/* ---------------------------------------------------------------- Tipografía (guía §4) */
+h1, h2, h3, h4, h5, h6,
+.navbar, .btn, label, dt {
+  font-family: var(--dino-fuente-titulos);
+}
+
+h1, h2, h3 {
+  font-weight: 750;
+  font-stretch: 115%;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+
+/* Convención biológica: los nombres de género y especie van en cursiva */
+.dino-nombre-cientifico {
+  font-style: italic;
+}
+
+a {
+  color: var(--dino-texto);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  color: var(--dino-texto);
+  text-decoration-thickness: 2px;
+}
+
+/* ---------------------------------------------------------------- Foco y movimiento (guía §7) */
+/* Un solo indicador de foco: se quitan los anillos azules de Bootstrap y se usa :focus-visible */
+.btn:focus,
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--dino-texto);
+  box-shadow: none;
+}
+
+:focus-visible {
+  outline: 3px solid var(--dino-texto);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------------------------------------------------------------- Layout: navbar y pie */
+.dino-navbar {
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--dino-linea);
+  background-color: var(--dino-superficie);
+}
+
+.dino-navbar .navbar-brand {
+  color: var(--dino-texto);
+  font-weight: 800;
+  font-stretch: 125%;
+}
+
+.dino-navbar .nav-link {
+  color: var(--dino-texto-suave);
+  font-weight: 500;
+}
+
+.dino-navbar .nav-link:hover,
+.dino-navbar .nav-link:focus {
+  color: var(--dino-texto);
+}
+
+.dino-pie {
+  margin-top: 3rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--dino-linea);
+  color: var(--dino-texto-suave);
+  font-family: var(--dino-fuente-titulos);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.dino-pie p {
+  margin: 0;
+}
+
+.dino-pie a {
+  color: var(--dino-texto-suave);
+}
+
+/* ---------------------------------------------------------------- Componentes comunes */
+.dino-boton {
+  padding: 0.5rem 1.25rem;
+  border: 1px solid var(--dino-texto);
+  border-radius: 2px;
+  background-color: var(--dino-texto);
+  color: var(--dino-superficie);
+  font-weight: 600;
+}
+
+.dino-boton:hover,
+.dino-boton:focus {
+  background-color: var(--dino-superficie);
+  color: var(--dino-texto);
+}
+
+.dino-encabezado {
+  margin-bottom: 1.5rem;
+}
+
+.dino-encabezado h1 {
+  margin-bottom: 0.25rem;
+  font-size: 1.953rem;
+}
+
+.dino-encabezado p {
+  max-width: 68ch;
+  margin-bottom: 0;
+  color: var(--dino-texto-suave);
+}
+
+@media (min-width: 768px) {
+  .dino-encabezado h1 {
+    font-size: 2.441rem;
+  }
+}
+
+/* Cada periodo define su banda y su fondo claro; las demás reglas solo los leen */
+.dino-jurasico {
+  --dino-banda: var(--dino-jurasico);
+  --dino-banda-clara: var(--dino-jurasico-claro);
+}
+
+.dino-cretacico {
+  --dino-banda: var(--dino-cretacico);
+  --dino-banda-clara: var(--dino-cretacico-claro);
+}
+
+.dino-periodo-otro {
+  --dino-banda: var(--dino-linea);
+  --dino-banda-clara: var(--dino-superficie);
+}
+
+/* ---------------------------------------------------------------- Catálogo: búsqueda */
+.dino-busqueda {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem 1rem;
+  align-items: end;
+  margin-bottom: 2.5rem;
+  padding: 1rem;
+  border: 1px solid var(--dino-linea);
+  background-color: var(--dino-superficie);
+}
+
+@media (min-width: 768px) {
+  .dino-busqueda {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto auto;
+  }
+}
+
+.dino-busqueda label {
+  margin-bottom: 0.25rem;
+  color: var(--dino-texto-suave);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.dino-busqueda .form-control,
+.dino-busqueda .form-select {
+  border-color: var(--dino-linea);
+  border-radius: 2px;
+  font-family: var(--dino-fuente-titulos);
+}
+
+.dino-busqueda__quitar {
+  padding: 0.5rem 0;
+  font-family: var(--dino-fuente-titulos);
+  font-weight: 500;
+}
+
+/* ---------------------------------------------------------------- Catálogo: estratos y filas */
+.dino-estrato + .dino-estrato {
+  margin-top: 2.5rem;
+}
+
+.dino-estrato__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.25rem 1rem;
+  padding: 0.6rem 1rem;
+  border-left: 8px solid var(--dino-banda);
+  background-color: var(--dino-banda-clara);
+}
+
+.dino-estrato__encabezado h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.dino-estrato__conteo {
+  font-family: var(--dino-fuente-titulos);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.dino-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-left: 8px solid var(--dino-banda);
+}
+
+.dino-fila {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem 1.5rem;
+  padding: 1.25rem 1rem;
+  border-bottom: 1px solid var(--dino-linea);
+  background-color: var(--dino-superficie);
+}
+
+@media (min-width: 576px) {
+  .dino-fila {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+}
+
+.dino-fila__imagen {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background-color: var(--dino-fondo);
+}
+
+.dino-fila__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0 1rem;
+}
+
+.dino-fila__nombre {
+  margin: 0;
+  font-size: 1.563rem;
+}
+
+.dino-fila__edad {
+  font-family: var(--dino-fuente-titulos);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dino-fila__datos {
+  margin: 0.15rem 0 0.6rem;
+  color: var(--dino-texto-suave);
+  font-family: var(--dino-fuente-titulos);
+  font-size: 0.9rem;
+}
+
+.dino-fila__descripcion {
+  display: -webkit-box;
+  max-width: 68ch;
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.dino-fila__accion {
+  font-family: var(--dino-fuente-titulos);
+  font-weight: 600;
+}
+
+.dino-vacio {
+  padding: 3rem 1rem;
+  border: 1px solid var(--dino-linea);
+  background-color: var(--dino-superficie);
+  text-align: center;
+}
+
+.dino-vacio p {
+  margin-bottom: 0.5rem;
+}
+
+/* ---------------------------------------------------------------- Ficha */
+.dino-volver {
+  margin-bottom: 1.5rem;
+  font-family: var(--dino-fuente-titulos);
+  font-weight: 500;
+}
+
+.dino-ficha__franja {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem;
+  padding: 0.5rem 1rem;
+  border-left: 8px solid var(--dino-banda);
+  background-color: var(--dino-banda-clara);
+  font-family: var(--dino-fuente-titulos);
+  font-weight: 600;
+}
+
+.dino-ficha__nombre {
+  margin: 1rem 0 1.5rem;
+  font-size: 2.441rem;
+  line-height: 1.05;
+}
+
+@media (min-width: 768px) {
+  .dino-ficha__nombre {
+    font-size: 3.052rem;
+  }
+}
+
+.dino-ficha__imagen {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background-color: var(--dino-superficie);
+}
+
+.dino-ficha__credito {
+  margin-top: 0.5rem;
+  color: var(--dino-texto-suave);
+  font-family: var(--dino-fuente-titulos);
+  font-size: 0.8rem;
+}
+
+.dino-ficha__descripcion {
+  max-width: 68ch;
+  font-size: 1.15rem;
+  line-height: 1.7;
+}
+
+.dino-datos {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.5rem 1.5rem;
+  margin: 1.5rem 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--dino-linea);
+}
+
+.dino-datos dt {
+  color: var(--dino-texto-suave);
+  font-weight: 500;
+}
+
+.dino-datos dd {
+  margin: 0;
+}
+
+.dino-ficha__fuente {
+  font-family: var(--dino-fuente-titulos);
+  font-weight: 600;
 }

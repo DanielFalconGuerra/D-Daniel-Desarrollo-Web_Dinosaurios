@@ -2,6 +2,8 @@
 
 Contrato visual para las vistas Razor. Creada con la skill `frontend-design` (`.claude/skills/frontend-design/`).
 Toda tarea de vistas o CSS debe seguirla; si algo no está aquí, usa Bootstrap 5 sin adornos.
+**Responsable:** Claude Code (diseñador). DeepSeek no edita vistas ni CSS; si una tarea de funcionalidad
+necesita mostrar algo nuevo, reutiliza las clases `dino-*` existentes de `wwwroot/css/site.css`.
 **Documento de solo lectura:** se envía como referencia; no lo modifiques ni lo devuelvas en tu respuesta.
 
 ## 1. Brief
@@ -44,7 +46,7 @@ Cargar en `_Layout.cshtml`, antes de `site.css`:
 ```html
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Source+Serif+4:opsz,wght@8..60,200..900&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Source+Serif+4:opsz,wght@8..60,200..900&display=swap" />
 ```
 
 | Rol | Familia | Ajustes |
@@ -56,6 +58,8 @@ Cargar en `_Layout.cshtml`, antes de `site.css`:
 - `h1` de página `2.441rem` (`1.953rem` en móvil); nombre en la ficha `3.052rem`; nombre en la fila `1.563rem`.
 - Texto largo con `max-width: 68ch`.
 - La antigüedad (`69–66 millones de años`) se escribe abreviada en la lista como `69–66 Ma`, con `font-variant-numeric: tabular-nums`.
+- Los nombres científicos (`Tyrannosaurus rex`) van en cursiva con la clase `dino-nombre-cientifico`: es la convención
+  biológica, no un adorno.
 - Prohibido: mayúsculas sostenidas en etiquetas, resaltar una sola palabra del título, fuentes monoespaciadas.
 
 ## 5. Layout
@@ -111,14 +115,15 @@ Imagen: crédito (obligatorio) Leer en Wikipedia
 - Sin flechas `→` al final de botones ni enlaces; la flecha `←` solo en «Volver al catálogo».
 - Sin cadenas con puntos medios (`A · B · C`): usar comas.
 - Estado vacío: «Ninguna especie coincide con la búsqueda.» y debajo el enlace «Quitar filtros». Sin disculpas.
-- Menú en español: «Catálogo» (Dinosaurios/Index) y «Privacidad». Marca: «Dinosaurios del Mesozoico».
+- Menú en español: «Catálogo» (Dinosaurios/Index) y «Privacidad»; la marca «Dinosaurios del Mesozoico» enlaza al catálogo.
 - `<html lang="es">`. Pie: «Imágenes de Wikimedia Commons y textos basados en Wikipedia en español.»
 
 ## 7. Piso de calidad
 
 - Foco visible: `outline: 3px solid var(--dino-texto); outline-offset: 2px` en `:focus-visible`.
   **Sustituye** a la regla de la plantilla `.btn:focus, … { box-shadow: … #258cfb; }`: se elimina esa regla
-  (no se deja otra con `box-shadow: none`), y así solo hay un indicador de foco.
+  y también se neutralizan los anillos azules propios de Bootstrap en `.btn`, `.form-control` y `.form-select`,
+  para que solo haya un indicador de foco.
 - Enlaces: color `--dino-texto` y **subrayados siempre** en el texto (no se quita el subrayado de Bootstrap);
   el menú y los botones siguen sin subrayado, como en Bootstrap.
 - Sin animaciones de entrada ni efectos hover en cada fila.

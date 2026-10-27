@@ -1,87 +1,106 @@
 @model IReadOnlyList<Dinosaurio>
 
 @{
-    ViewData["Title"] = "Catálogo de dinosaurios";
+    ViewData["Title"] = "Catálogo";
 
-    var nombreFiltro = Context.Request.Query["nombre"].ToString();
-    var periodoFiltro = Context.Request.Query["periodo"].ToString();
-    var hayFiltros = !string.IsNullOrWhiteSpace(nombreFiltro) || !string.IsNullOrWhiteSpace(periodoFiltro);
+    var nombreActual = ViewData["NombreActual"] as string ?? string.Empty;
+    var periodoActual = ViewData["PeriodoActual"] as string ?? string.Empty;
+    var periodosValidos = ViewData["PeriodosValidos"] as string[] ?? Array.Empty<string>();
+    var hayFiltros = nombreActual.Length > 0 || periodoActual.Length > 0;
+
+    // Estratos: el periodo más reciente arriba, como en un corte de roca (guía §2)
+    var estratos = Model
+        .GroupBy(d => d.Periodo)
+        .OrderBy(g => OrdenEstratigrafico(g.Key))
+        .ThenBy(g => g.Key)
+        .ToList();
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-    <div>
-        <h1 class="mb-1">Catálogo de dinosaurios</h1>
-        <p class="text-muted mb-0">@Model.Count especies registradas</p>
-    </div>
-    <a class="btn btn-outline-secondary" asp-controller="Home" asp-action="Index">Volver al inicio</a>
-</div>
+@functions {
+    static string ClasePeriodo(string periodo) =>
+        periodo.StartsWith("Jurásico") ? "dino-jurasico"
+        : periodo.StartsWith("Cretácico") ? "dino-cretacico"
+        : "dino-periodo-otro";
 
-<form method="get" asp-action="Index" class="card card-body shadow-sm mb-4">
-    <div class="row g-3 align-items-end">
-        <div class="col-12 col-md-5">
-            <label for="nombre" class="form-label">Nombre</label>
-            <input type="text"
-                   class="form-control"
-                   id="nombre"
-                   name="nombre"
-                   value="@nombreFiltro"
-                   placeholder="Buscar por nombre..." />
-        </div>
-        <div class="col-12 col-md-3">
-            <label for="periodo" class="form-label">Periodo</label>
-            <select class="form-select" id="periodo" name="periodo">
-                <option value="" selected="@(string.IsNullOrEmpty(periodoFiltro) ? "selected" : null)">Todos</option>
-                <option value="Jurásico" selected="@(periodoFiltro == "Jurásico" ? "selected" : null)">Jurásico</option>
-                <option value="Cretácico" selected="@(periodoFiltro == "Cretácico" ? "selected" : null)">Cretácico</option>
-            </select>
-        </div>
-        <div class="col-12 col-md-4 d-flex gap-2">
-            <button type="submit" class="btn btn-primary">Filtrar</button>
-            <a class="btn btn-outline-secondary" asp-action="Index">Limpiar</a>
-        </div>
+    static int OrdenEstratigrafico(string periodo) =>
+        periodo.StartsWith("Cretácico") ? 0 : periodo.StartsWith("Jurásico") ? 1 : 2;
+
+    static string AntiguedadCorta(string antiguedad) =>
+        antiguedad.Replace(" millones de años", " Ma");
+
+    static string Especies(int n) => n == 1 ? "1 especie" : $"{n} especies";
+}
+
+<header class="dino-encabezado">
+    <h1>Dinosaurios del Mesozoico</h1>
+    <p>@Especies(Model.Count), agrupadas por periodo. Como en los estratos de roca, el más reciente va arriba.</p>
+</header>
+
+<form method="get" asp-action="Index" class="dino-busqueda" role="search">
+    <div>
+        <label for="nombre">Nombre</label>
+        <input type="search" class="form-control" id="nombre" name="nombre" value="@nombreActual" />
     </div>
+    <div>
+        <label for="periodo">Periodo</label>
+        <select class="form-select" id="periodo" name="periodo">
+            <option value="">Todos</option>
+            @foreach (var periodo in periodosValidos)
+            {
+                <option value="@periodo" selected="@(periodo == periodoActual)">@periodo</option>
+            }
+        </select>
+    </div>
+    <button type="submit" class="btn dino-boton">Buscar</button>
+    @if (hayFiltros)
+    {
+        <a class="dino-busqueda__quitar" asp-action="Index">Quitar filtros</a>
+    }
 </form>
 
 @if (Model.Count == 0)
 {
-    if (hayFiltros)
-    {
-        <div class="alert alert-warning" role="alert">
-            No se encontraron dinosaurios que coincidan con los filtros aplicados.
-            Probá con otro nombre o periodo, o usá «Limpiar» para ver el catálogo completo.
-        </div>
-    }
-    else
-    {
-        <div class="alert alert-info" role="alert">
-            Todavía no hay dinosaurios en el catálogo.
-        </div>
-    }
+    <div class="dino-vacio">
+        @if (hayFiltros)
+        {
+            <p>Ninguna especie coincide con la búsqueda.</p>
+            <a asp-action="Index">Quitar filtros</a>
+        }
+        else
+        {
+            <p>El catálogo todavía no tiene especies.</p>
+        }
+    </div>
 }
 else
 {
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
-        @foreach (var dinosaurio in Model)
-        {
-            <div class="col">
-                <div class="card h-100 shadow-sm">
-                    <img src="@dinosaurio.ImagenUrl"
-                         class="card-img-top"
-                         alt="@dinosaurio.Nombre"
-                         style="height: 220px; object-fit: cover;" />
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title mb-2">@dinosaurio.Nombre</h5>
-                        <div class="mb-3">
-                            <span class="badge bg-secondary me-1">@dinosaurio.Periodo</span>
-                            <span class="badge bg-success">@dinosaurio.Dieta</span>
-                        </div>
-                        <p class="card-text text-secondary mb-3">@dinosaurio.Descripcion</p>
-                        <a class="btn btn-primary mt-auto align-self-start"
-                           asp-action="Detalle"
-                           asp-route-id="@dinosaurio.Id">Ver detalle</a>
-                    </div>
-                </div>
+    for (var i = 0; i < estratos.Count; i++)
+    {
+        var estrato = estratos[i];
+        <section class="dino-estrato @ClasePeriodo(estrato.Key)" aria-labelledby="estrato-@i">
+            <div class="dino-estrato__encabezado">
+                <h2 id="estrato-@i">@estrato.Key</h2>
+                <span class="dino-estrato__conteo">@Especies(estrato.Count())</span>
             </div>
-        }
-    </div>
+            <ul class="dino-lista">
+                @foreach (var dinosaurio in estrato)
+                {
+                    <li class="dino-fila">
+                        <img class="dino-fila__imagen" src="@dinosaurio.ImagenUrl"
+                             alt="Ilustración de @dinosaurio.Nombre" loading="lazy" />
+                        <div>
+                            <div class="dino-fila__cabecera">
+                                <h3 class="dino-fila__nombre dino-nombre-cientifico">@dinosaurio.Nombre</h3>
+                                <span class="dino-fila__edad">@AntiguedadCorta(dinosaurio.Antiguedad)</span>
+                            </div>
+                            <p class="dino-fila__datos">@dinosaurio.Dieta, @dinosaurio.Region</p>
+                            <p class="dino-fila__descripcion">@dinosaurio.Descripcion</p>
+                            <a class="dino-fila__accion" asp-action="Detalle" asp-route-id="@dinosaurio.Id"
+                               aria-label="Ver ficha de @dinosaurio.Nombre">Ver ficha</a>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </section>
+    }
 }

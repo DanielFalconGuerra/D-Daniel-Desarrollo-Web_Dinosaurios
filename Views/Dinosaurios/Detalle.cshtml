@@ -2,53 +2,51 @@
 
 @{
     ViewData["Title"] = Model.Nombre;
+
+    var clasePeriodo = Model.Periodo.StartsWith("Jurásico") ? "dino-jurasico"
+        : Model.Periodo.StartsWith("Cretácico") ? "dino-cretacico"
+        : "dino-periodo-otro";
+    var textoFuente = Model.FuenteUrl.Contains("wikipedia.org") ? "Leer en Wikipedia" : "Leer la fuente";
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-    <div>
-        <h1 class="mb-2">@Model.Nombre</h1>
-        <div>
-            <span class="badge bg-secondary me-1">@Model.Periodo</span>
-            <span class="badge bg-success">@Model.Dieta</span>
+<p class="dino-volver"><a asp-action="Index">← Volver al catálogo</a></p>
+
+<article class="@clasePeriodo">
+    <div class="dino-ficha__franja">
+        <span>@Model.Periodo</span>
+        <span>@Model.Antiguedad</span>
+    </div>
+
+    <h1 class="dino-ficha__nombre dino-nombre-cientifico">@Model.Nombre</h1>
+
+    <div class="row g-4 g-lg-5">
+        <div class="col-12 col-lg-7">
+            <figure class="mb-0">
+                <img class="dino-ficha__imagen" src="@Model.ImagenUrl" alt="Ilustración de @Model.Nombre" />
+                @if (!string.IsNullOrWhiteSpace(Model.CreditoImagen))
+                {
+                    <figcaption class="dino-ficha__credito">Imagen: @Model.CreditoImagen</figcaption>
+                }
+            </figure>
+        </div>
+        <div class="col-12 col-lg-5">
+            <p class="dino-ficha__descripcion">@Model.Descripcion</p>
+
+            <dl class="dino-datos">
+                <dt>Periodo</dt>
+                <dd>@Model.Periodo</dd>
+                <dt>Antigüedad</dt>
+                <dd>@Model.Antiguedad</dd>
+                <dt>Región</dt>
+                <dd>@Model.Region</dd>
+                <dt>Dieta</dt>
+                <dd>@Model.Dieta</dd>
+            </dl>
+
+            @if (!string.IsNullOrWhiteSpace(Model.FuenteUrl))
+            {
+                <a class="dino-ficha__fuente" href="@Model.FuenteUrl" target="_blank" rel="noopener noreferrer">@textoFuente</a>
+            }
         </div>
     </div>
-    <a class="btn btn-outline-secondary" asp-action="Index">Volver al catálogo</a>
-</div>
-
-<div class="row g-4">
-    <div class="col-12 col-lg-6">
-        <img src="@Model.ImagenUrl"
-             class="img-fluid rounded shadow-sm w-100"
-             alt="@Model.Nombre"
-             style="max-height: 480px; object-fit: cover;" />
-        @if (!string.IsNullOrWhiteSpace(Model.CreditoImagen))
-        {
-            <p class="text-muted small mt-2 mb-0">Imagen: @Model.CreditoImagen</p>
-        }
-    </div>
-    <div class="col-12 col-lg-6">
-        <p class="lead">@Model.Descripcion</p>
-
-        <dl class="row mb-0">
-            <dt class="col-sm-4">Periodo</dt>
-            <dd class="col-sm-8">@Model.Periodo</dd>
-
-            <dt class="col-sm-4">Antigüedad</dt>
-            <dd class="col-sm-8">@Model.Antiguedad</dd>
-
-            <dt class="col-sm-4">Región</dt>
-            <dd class="col-sm-8">@Model.Region</dd>
-
-            <dt class="col-sm-4">Dieta</dt>
-            <dd class="col-sm-8">@Model.Dieta</dd>
-        </dl>
-
-        @if (!string.IsNullOrWhiteSpace(Model.FuenteUrl))
-        {
-            <a class="btn btn-link px-0 mt-3"
-               href="@Model.FuenteUrl"
-               target="_blank"
-               rel="noopener noreferrer">Ver fuente original</a>
-        }
-    </div>
-</div>
+</article>
