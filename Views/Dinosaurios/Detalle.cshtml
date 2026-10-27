@@ -3,15 +3,12 @@
 @{
     ViewData["Title"] = Model.Nombre;
 
-    var clasePeriodo = Model.Periodo.StartsWith("Jurásico") ? "dino-jurasico"
-        : Model.Periodo.StartsWith("Cretácico") ? "dino-cretacico"
-        : "dino-periodo-otro";
-    var textoFuente = Model.FuenteUrl.Contains("wikipedia.org") ? "Leer en Wikipedia" : "Leer la fuente";
+    var esIcono = Presentacion.EsIcono(Model.ImagenUrl);
 }
 
 <p class="dino-volver"><a asp-action="Index">← Volver al catálogo</a></p>
 
-<article class="@clasePeriodo">
+<article class="@Presentacion.ClasesPeriodo(Model.Periodo)">
     <div class="dino-ficha__franja">
         <span>@Model.Periodo</span>
         <span>@Model.Antiguedad</span>
@@ -22,8 +19,16 @@
     <div class="row g-4 g-lg-5">
         <div class="col-12 col-lg-7">
             <figure class="mb-0">
-                <img class="dino-ficha__imagen" src="@Model.ImagenUrl" alt="Ilustración de @Model.Nombre" />
-                @if (!string.IsNullOrWhiteSpace(Model.CreditoImagen))
+                @if (esIcono)
+                {
+                    <img class="dino-ficha__imagen dino-imagen--icono" src="@Model.ImagenUrl" alt="" />
+                    <figcaption class="dino-ficha__credito">Este dinosaurio todavía no tiene ilustración: se muestra el icono de huella del catálogo.</figcaption>
+                }
+                else
+                {
+                    <img class="dino-ficha__imagen" src="@Model.ImagenUrl" alt="Ilustración de @Model.Nombre" />
+                }
+                @if (!esIcono && !string.IsNullOrWhiteSpace(Model.CreditoImagen))
                 {
                     <figcaption class="dino-ficha__credito">Imagen: @Model.CreditoImagen</figcaption>
                 }
@@ -45,7 +50,7 @@
 
             @if (!string.IsNullOrWhiteSpace(Model.FuenteUrl))
             {
-                <a class="dino-ficha__fuente" href="@Model.FuenteUrl" target="_blank" rel="noopener noreferrer">@textoFuente</a>
+                <a class="dino-ficha__fuente" href="@Model.FuenteUrl" target="_blank" rel="noopener noreferrer">@Presentacion.TextoFuente(Model.FuenteUrl)</a>
             }
         </div>
     </div>

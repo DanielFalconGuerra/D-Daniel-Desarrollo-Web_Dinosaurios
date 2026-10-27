@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Huella fósil de tres dedos">
+  <!-- Icono de Web_Dinosaurios para los géneros sin ilustración: huella de terópodo (icnita).
+       Tres dedos finos separados de la almohadilla del talón. Color: texto suave de la guía (#55625F). -->
+  <g fill="#55625F">
+    <path d="M55.5 74 C54.5 54 56.5 32 60 14 C63.5 32 65.5 54 64.5 74 Q60 78 55.5 74 Z" />
+    <path d="M56 74 C55.5 60 57 46 60 34 C63 46 64.5 60 64 74 Q60 77.5 56 74 Z" transform="rotate(-40 60 86)" />
+    <path d="M56 74 C55.5 60 57 46 60 34 C63 46 64.5 60 64 74 Q60 77.5 56 74 Z" transform="rotate(40 60 86)" />
+    <ellipse cx="60" cy="92" rx="12" ry="10" />
+  </g>
+</svg>

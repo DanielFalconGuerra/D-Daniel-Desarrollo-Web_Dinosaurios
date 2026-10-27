@@ -56,6 +56,7 @@ public class DinosauriosController : Controller
         ViewData["Pagina"] = pagina;
         ViewData["TotalPaginas"] = totalPaginas;
         ViewData["Total"] = total;
+        ViewData["TamanoPagina"] = TamanoPagina;
 
         return View(elementos);
     }

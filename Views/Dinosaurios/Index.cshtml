@@ -6,34 +6,65 @@
     var nombreActual = ViewData["NombreActual"] as string ?? string.Empty;
     var periodoActual = ViewData["PeriodoActual"] as string ?? string.Empty;
     var periodosValidos = ViewData["PeriodosValidos"] as string[] ?? Array.Empty<string>();
+    var pagina = ViewData["Pagina"] as int? ?? 1;
+    var totalPaginas = ViewData["TotalPaginas"] as int? ?? 1;
+    var total = ViewData["Total"] as int? ?? Model.Count;
     var hayFiltros = nombreActual.Length > 0 || periodoActual.Length > 0;
 
-    // Estratos: el periodo más reciente arriba, como en un corte de roca (guía §2)
-    var estratos = Model
-        .GroupBy(d => d.Periodo)
-        .OrderBy(g => OrdenEstratigrafico(g.Key))
-        .ThenBy(g => g.Key)
-        .ToList();
+    // Estratos: el SQL ya ordena del más reciente al más antiguo, y GroupBy conserva
+    // ese orden de aparición, así que el estrato más reciente queda arriba (guía §2)
+    var estratos = Model.GroupBy(d => d.Periodo).ToList();
+
+    var tamanoPagina = ViewData["TamanoPagina"] as int? ?? 24;
+    var primero = (pagina - 1) * tamanoPagina + 1;
+    var ultimo = primero + Model.Count - 1;
 }
 
 @functions {
-    static string ClasePeriodo(string periodo) =>
-        periodo.StartsWith("Jurásico") ? "dino-jurasico"
-        : periodo.StartsWith("Cretácico") ? "dino-cretacico"
-        : "dino-periodo-otro";
-
-    static int OrdenEstratigrafico(string periodo) =>
-        periodo.StartsWith("Cretácico") ? 0 : periodo.StartsWith("Jurásico") ? 1 : 2;
-
     static string AntiguedadCorta(string antiguedad) =>
         antiguedad.Replace(" millones de años", " Ma");
 
-    static string Especies(int n) => n == 1 ? "1 especie" : $"{n} especies";
+    static string Dinosaurios(int n) => n == 1 ? "1 dinosaurio" : $"{n} dinosaurios";
+
+    // Ruta de una página conservando los filtros; la página 1 no lleva ?pagina
+    Dictionary<string, string> RutaPagina(int n, string nombre, string periodo)
+    {
+        var ruta = new Dictionary<string, string>();
+        if (nombre.Length > 0) ruta["nombre"] = nombre;
+        if (periodo.Length > 0) ruta["periodo"] = periodo;
+        if (n > 1) ruta["pagina"] = n.ToString();
+        return ruta;
+    }
+
+    // Primera, última y dos a cada lado de la actual; null marca un hueco («…»)
+    static List<int?> VentanaPaginas(int actual, int totalPaginas)
+    {
+        var paginas = new List<int?>();
+        for (var n = 1; n <= totalPaginas; n++)
+        {
+            if (n == 1 || n == totalPaginas || Math.Abs(n - actual) <= 2)
+            {
+                paginas.Add(n);
+            }
+            else if (paginas.Count > 0 && paginas[^1] is not null)
+            {
+                paginas.Add(null);
+            }
+        }
+        return paginas;
+    }
 }
 
 <header class="dino-encabezado">
     <h1>Dinosaurios del Mesozoico</h1>
-    <p>@Especies(Model.Count), agrupadas por periodo. Como en los estratos de roca, el más reciente va arriba.</p>
+    @if (hayFiltros)
+    {
+        <p>@(total == 1 ? "1 dinosaurio coincide" : $"{total} dinosaurios coinciden") con la búsqueda, del más reciente al más antiguo.</p>
+    }
+    else
+    {
+        <p>@Dinosaurios(total), del más reciente al más antiguo. Como en los estratos de una roca, el periodo más joven va arriba.</p>
+    }
 </header>
 
 <form method="get" asp-action="Index" class="dino-busqueda" role="search">
@@ -61,7 +92,12 @@
 @if (Model.Count == 0)
 {
     <div class="dino-vacio">
-        @if (hayFiltros)
+        @if (total > 0)
+        {
+            <p>La página @pagina no existe: el catálogo tiene @totalPaginas.</p>
+            <a asp-action="Index" asp-all-route-data="@RutaPagina(1, nombreActual, periodoActual)">Ir a la primera página</a>
+        }
+        else if (hayFiltros)
         {
             <p>Ninguna especie coincide con la búsqueda.</p>
             <a asp-action="Index">Quitar filtros</a>
@@ -77,23 +113,35 @@ else
     for (var i = 0; i < estratos.Count; i++)
     {
         var estrato = estratos[i];
-        <section class="dino-estrato @ClasePeriodo(estrato.Key)" aria-labelledby="estrato-@i">
+        var limites = Presentacion.LimitesEpoca(estrato.Key);
+        <section class="dino-estrato @Presentacion.ClasesPeriodo(estrato.Key)" aria-labelledby="estrato-@i">
             <div class="dino-estrato__encabezado">
                 <h2 id="estrato-@i">@estrato.Key</h2>
-                <span class="dino-estrato__conteo">@Especies(estrato.Count())</span>
+                @if (limites.Length > 0)
+                {
+                    <span class="dino-estrato__limites">@limites</span>
+                }
             </div>
             <ul class="dino-lista">
                 @foreach (var dinosaurio in estrato)
                 {
+                    var esIcono = Presentacion.EsIcono(dinosaurio.ImagenUrl);
                     <li class="dino-fila">
-                        <img class="dino-fila__imagen" src="@dinosaurio.ImagenUrl"
-                             alt="Ilustración de @dinosaurio.Nombre" loading="lazy" />
+                        @if (esIcono)
+                        {
+                            <img class="dino-fila__imagen dino-imagen--icono" src="@dinosaurio.ImagenUrl" alt="" loading="lazy" />
+                        }
+                        else
+                        {
+                            <img class="dino-fila__imagen" src="@dinosaurio.ImagenUrl"
+                                 alt="Ilustración de @dinosaurio.Nombre" loading="lazy" />
+                        }
                         <div>
                             <div class="dino-fila__cabecera">
                                 <h3 class="dino-fila__nombre dino-nombre-cientifico">@dinosaurio.Nombre</h3>
                                 <span class="dino-fila__edad">@AntiguedadCorta(dinosaurio.Antiguedad)</span>
                             </div>
-                            <p class="dino-fila__datos">@dinosaurio.Dieta, @dinosaurio.Region</p>
+                            <p class="dino-fila__datos">@Presentacion.DatosBreves(dinosaurio.Dieta, dinosaurio.Region)</p>
                             <p class="dino-fila__descripcion">@dinosaurio.Descripcion</p>
                             <a class="dino-fila__accion" asp-action="Detalle" asp-route-id="@dinosaurio.Id"
                                aria-label="Ver ficha de @dinosaurio.Nombre">Ver ficha</a>
@@ -102,5 +150,37 @@ else
                 }
             </ul>
         </section>
+    }
+
+    if (totalPaginas > 1)
+    {
+        <nav class="dino-paginacion" aria-label="Páginas del catálogo">
+            <p class="dino-paginacion__resumen">Del @primero al @ultimo de @total</p>
+            <ul class="dino-paginacion__lista">
+                @if (pagina > 1)
+                {
+                    <li><a asp-action="Index" asp-all-route-data="@RutaPagina(pagina - 1, nombreActual, periodoActual)">Anterior</a></li>
+                }
+                @foreach (var n in VentanaPaginas(pagina, totalPaginas))
+                {
+                    if (n is null)
+                    {
+                        <li><span class="dino-paginacion__hueco" aria-hidden="true">…</span></li>
+                    }
+                    else if (n == pagina)
+                    {
+                        <li><span aria-current="page">@n</span></li>
+                    }
+                    else
+                    {
+                        <li><a asp-action="Index" asp-all-route-data="@RutaPagina(n.Value, nombreActual, periodoActual)" aria-label="Página @n">@n</a></li>
+                    }
+                }
+                @if (pagina < totalPaginas)
+                {
+                    <li><a asp-action="Index" asp-all-route-data="@RutaPagina(pagina + 1, nombreActual, periodoActual)">Siguiente</a></li>
+                }
+            </ul>
+        </nav>
     }
 }

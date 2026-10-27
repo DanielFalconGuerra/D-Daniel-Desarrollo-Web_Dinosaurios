@@ -8,7 +8,8 @@ necesita mostrar algo nuevo, reutiliza las clases `dino-*` existentes de `wwwroo
 
 ## 1. Brief
 
-- **Tema:** ocho dinosaurios del Mesozoico, con su periodo, antigüedad, región, dieta, descripción e imagen.
+- **Tema:** unos 1 600 dinosaurios del Mesozoico (8 con foto y el resto, importados de la PBDB, con el icono de huella),
+  con su periodo, antigüedad, región, dieta, descripción e imagen.
 - **Público:** una persona curiosa que lee en español y quiere comparar especies.
 - **Trabajo principal:** recorrer el catálogo, filtrar por nombre o periodo y abrir la ficha de una especie.
 
@@ -16,7 +17,7 @@ necesita mostrar algo nuevo, reutiliza las clases `dino-*` existentes de `wwwroo
 
 La lista se lee como un corte de roca: **cada periodo es un estrato** con el color oficial de la
 [Carta Cronoestratigráfica Internacional (ICS)](https://stratigraphy.org/chart), y los estratos más recientes van arriba
-(Cretácico sobre Jurásico). El color no decora: dice a qué periodo pertenece cada especie.
+(Cretácico sobre Jurásico y Triásico). El periodo da el color de la banda y la época el del encabezado. El color no decora: dice a qué periodo pertenece cada especie.
 Es el único elemento llamativo de la página; todo lo demás es sobrio.
 
 ## 3. Tokens
@@ -30,12 +31,19 @@ Declararlos en `:root` de `wwwroot/css/site.css` y usarlos siempre por nombre:
 | `--dino-texto` | `#1E2B2F` | Texto principal (pizarra) |
 | `--dino-texto-suave` | `#55625F` | Texto secundario y créditos |
 | `--dino-linea` | `#C9CFCB` | Bordes y separadores de 1 px |
+| `--dino-triasico` | `#812B92` | Banda del Triásico (color ICS) |
+| `--dino-triasico-inferior` / `-medio` / `-superior` | `#983999` / `#B168B1` / `#BD8CC3` | Encabezado de cada época (ICS) |
 | `--dino-jurasico` | `#34B2C9` | Banda del Jurásico (color ICS) |
-| `--dino-jurasico-claro` | `#B3E3EE` | Fondo del encabezado del Jurásico Superior (ICS) |
+| `--dino-jurasico-inferior` / `-medio` / `-superior` | `#42AED0` / `#80CFD8` / `#B3E3EE` | Encabezado de cada época (ICS) |
 | `--dino-cretacico` | `#7FC64E` | Banda del Cretácico (color ICS) |
-| `--dino-cretacico-claro` | `#A6D84A` | Fondo del encabezado del Cretácico Superior (ICS) |
+| `--dino-cretacico-inferior` / `-superior` | `#8CCD57` / `#A6D84A` | Encabezado de cada época (ICS) |
+
+Colores verificados con la plantilla `Template:Period_color` de Wikipedia en inglés, que reproduce la carta de la ICS.
 
 - Sobre los colores de periodo solo va texto `--dino-texto` (contraste ≥ 4.5:1). Nunca texto blanco ni texto de color.
+- El Triásico Inferior (2.3:1) y el Medio (3.8:1) no llegan a 4.5:1: su encabezado usa `color-mix()` con blanco
+  (45 % y 55 % del color) para conservar el tono. La banda de 8 px sí usa el color puro, porque no lleva texto.
+- Las clases salen de `Helpers/Presentacion.cs` (`ClasesPeriodo`): periodo (`dino-cretacico`) más época (`dino-cretacico-superior`).
 - Periodo desconocido: usar `--dino-linea` como banda.
 - Botón principal: fondo `--dino-texto`, texto blanco. No usar `btn-primary` azul ni `badge bg-*`.
 
@@ -68,25 +76,38 @@ Cargar en `_Layout.cshtml`, antes de `site.css`:
 
 ```
 Dinosaurios del Mesozoico
-8 especies, de la más reciente a la más antigua por periodo.
+1617 dinosaurios, del más reciente al más antiguo. […]   (con filtros: «23 dinosaurios coinciden con la búsqueda…»)
 ┌───────────────────────────────────────────────────────────┐
 │ [Nombre_____________]  [Periodo ▾]  [Buscar] Quitar filtros │  formulario en una fila
 └───────────────────────────────────────────────────────────┘
-▌ Cretácico Superior                              6 especies   encabezado del estrato
+▌ Cretácico Superior                           100,5–66 Ma   encabezado: época y sus límites ICS
 ▌┌────────────┐ Tyrannosaurus rex                  69–66 Ma    fila: banda de 8 px a la izquierda
 ▌│  imagen    │ Carnívoro, América del Norte
 ▌│  4:3       │ Descripción en serif, máx. 3 líneas…
 ▌└────────────┘                                   Ver ficha
-▌ Jurásico Superior                               2 especies
+▌ Cretácico Inferior                          145–100,5 Ma
 ▌ …
+Del 1 al 24 de 1617            Anterior 1 … 4 [5] 6 … 68 Siguiente   paginación
 ```
 
 - **Filas, no tarjetas:** cada especie es una fila horizontal (`display: grid; grid-template-columns: 220px 1fr`),
   separada por una línea de 1 px, sin sombra y con `border-radius: 0`.
 - La banda izquierda (`border-left: 8px solid`) usa el color del periodo; el encabezado del estrato usa el color claro.
-- Agrupar en la vista con `Model.GroupBy(d => d.Periodo)`, ordenando los grupos con el Cretácico primero.
-  Dentro de cada grupo se respeta el orden por nombre del SQL.
+- El SQL ya ordena por `EdadMaxMa` (más reciente primero): la vista agrupa con `Model.GroupBy(d => d.Periodo)` sin
+  reordenar, porque `GroupBy` conserva el orden de aparición. Un estrato puede continuar en la página siguiente.
+- El encabezado del estrato muestra los límites de la época (`Presentacion.LimitesEpoca`), no un conteo: con 24 filas
+  por página un conteo solo diría cuántas hay en esa página.
+- La línea de datos omite los «Sin datos» de la importación (`Presentacion.DatosBreves`): «Carnívoro, Argentina»,
+  «Herbívoro» o «Dieta y región sin datos».
 - Imagen `aspect-ratio: 4 / 3; object-fit: cover`, `alt="Ilustración de {Nombre}"`, `loading="lazy"`.
+- **Icono** (`/images/dinosaurios/icono.svg`): huella fósil de tres dedos en `#55625F` para los géneros sin foto.
+  Se muestra con `img.dino-imagen--icono` (fondo `--dino-fondo`, borde de 1 px, `object-fit: contain`) y `alt=""`,
+  porque no ilustra a ese dinosaurio. En móvil baja a `aspect-ratio: 3 / 1` para no repetir 24 cuadros enormes.
+  En el SVG no puede haber dos guiones seguidos dentro de un comentario XML: invalidan el archivo.
+- **Paginación** (`nav.dino-paginacion`, `aria-label="Páginas del catálogo"`): a la izquierda «Del 25 al 48 de 1617»;
+  a la derecha «Anterior», la primera, la última y dos páginas a cada lado de la actual, con «…» en los huecos.
+  La actual es un `span` con `aria-current="page"` en `--dino-texto`; los enlaces conservan nombre y periodo, y la
+  página 1 no lleva `?pagina`. Una página fuera de rango muestra el estado vacío con «Ir a la primera página».
 - Descripción recortada a 3 líneas con `-webkit-line-clamp: 3`.
 - Móvil (< 576 px): la imagen pasa arriba a todo el ancho y el texto debajo; la banda se mantiene.
 - Texto alineado a la izquierda en toda la página; nada centrado salvo el estado vacío.
@@ -107,16 +128,21 @@ Imagen: crédito (obligatorio) Leer en Wikipedia
 - Dos columnas desde `lg` (imagen 7/12, texto 5/12); una columna en móvil.
 - Datos en `<dl>` con dos columnas; etiquetas en Archivo `--dino-texto-suave`, valores en `--dino-texto`.
 - `CreditoImagen` siempre visible bajo la imagen (`0.8rem`, `--dino-texto-suave`): la licencia lo exige.
+  Con el icono, el pie de figura dice «Este dinosaurio todavía no tiene ilustración: se muestra el icono de huella del catálogo.»
+- Enlace a la fuente: «Leer en Wikipedia» o «Ver en la Paleobiology Database» (`Presentacion.TextoFuente`).
 
 ## 6. Textos
 
 - Español neutro con **tuteo** («prueba», «elige»), nunca voseo («probá», «usá»). Mayúscula solo al inicio.
-- Botones con el verbo de la acción: «Buscar», «Quitar filtros», «Ver ficha», «Leer en Wikipedia», «Volver al catálogo».
+- Botones con el verbo de la acción: «Buscar», «Quitar filtros», «Ver ficha», «Leer en Wikipedia», «Volver al catálogo»,
+  «Anterior», «Siguiente».
 - Sin flechas `→` al final de botones ni enlaces; la flecha `←` solo en «Volver al catálogo».
 - Sin cadenas con puntos medios (`A · B · C`): usar comas.
 - Estado vacío: «Ninguna especie coincide con la búsqueda.» y debajo el enlace «Quitar filtros». Sin disculpas.
 - Menú en español: «Catálogo» (Dinosaurios/Index) y «Privacidad»; la marca «Dinosaurios del Mesozoico» enlaza al catálogo.
-- `<html lang="es">`. Pie: «Imágenes de Wikimedia Commons y textos basados en Wikipedia en español.»
+- `<html lang="es">`. Pie: «Datos de la Paleobiology Database (CC BY 4.0), textos de Wikipedia en español (CC BY-SA 4.0)
+  e imágenes de Wikimedia Commons.», con enlace a paleobiodb.org.
+- Los números de 4 cifras van sin separador («1617»), como recomienda la RAE; así no chocan con la coma decimal de «72,1 Ma».
 
 ## 7. Piso de calidad
 

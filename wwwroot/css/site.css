@@ -7,10 +7,18 @@
   --dino-texto: #1E2B2F;
   --dino-texto-suave: #55625F;
   --dino-linea: #C9CFCB;
+  /* Periodos (banda) y épocas (encabezado): colores de la Carta Cronoestratigráfica Internacional */
+  --dino-triasico: #812B92;
+  --dino-triasico-inferior: #983999;
+  --dino-triasico-medio: #B168B1;
+  --dino-triasico-superior: #BD8CC3;
   --dino-jurasico: #34B2C9;
-  --dino-jurasico-claro: #B3E3EE;
+  --dino-jurasico-inferior: #42AED0;
+  --dino-jurasico-medio: #80CFD8;
+  --dino-jurasico-superior: #B3E3EE;
   --dino-cretacico: #7FC64E;
-  --dino-cretacico-claro: #A6D84A;
+  --dino-cretacico-inferior: #8CCD57;
+  --dino-cretacico-superior: #A6D84A;
 
   --dino-fuente-titulos: "Archivo", system-ui, sans-serif;
   --dino-fuente-texto: "Source Serif 4", Georgia, serif;
@@ -173,16 +181,33 @@ a:hover {
   }
 }
 
-/* Cada periodo define su banda y su fondo claro; las demás reglas solo los leen */
+/* El periodo define la banda y la época el fondo del encabezado; las demás reglas solo los leen */
+.dino-triasico {
+  --dino-banda: var(--dino-triasico);
+  --dino-banda-clara: var(--dino-triasico-superior);
+}
+
 .dino-jurasico {
   --dino-banda: var(--dino-jurasico);
-  --dino-banda-clara: var(--dino-jurasico-claro);
+  --dino-banda-clara: var(--dino-jurasico-superior);
 }
 
 .dino-cretacico {
   --dino-banda: var(--dino-cretacico);
-  --dino-banda-clara: var(--dino-cretacico-claro);
+  --dino-banda-clara: var(--dino-cretacico-superior);
 }
+
+.dino-triasico-superior { --dino-banda-clara: var(--dino-triasico-superior); }
+.dino-jurasico-inferior { --dino-banda-clara: var(--dino-jurasico-inferior); }
+.dino-jurasico-medio { --dino-banda-clara: var(--dino-jurasico-medio); }
+.dino-jurasico-superior { --dino-banda-clara: var(--dino-jurasico-superior); }
+.dino-cretacico-inferior { --dino-banda-clara: var(--dino-cretacico-inferior); }
+.dino-cretacico-superior { --dino-banda-clara: var(--dino-cretacico-superior); }
+
+/* El Triásico Inferior y Medio son demasiado oscuros para texto --dino-texto (2.3:1 y 3.8:1):
+   se aclaran con blanco hasta superar 4.5:1 sin perder el tono de la carta */
+.dino-triasico-inferior { --dino-banda-clara: color-mix(in srgb, var(--dino-triasico-inferior) 45%, white); }
+.dino-triasico-medio { --dino-banda-clara: color-mix(in srgb, var(--dino-triasico-medio) 55%, white); }
 
 .dino-periodo-otro {
   --dino-banda: var(--dino-linea);
@@ -248,7 +273,7 @@ a:hover {
   font-size: 1.25rem;
 }
 
-.dino-estrato__conteo {
+.dino-estrato__limites {
   font-family: var(--dino-fuente-titulos);
   font-size: 0.8rem;
   font-weight: 600;
@@ -282,6 +307,23 @@ a:hover {
   aspect-ratio: 4 / 3;
   object-fit: cover;
   background-color: var(--dino-fondo);
+}
+
+/* Géneros sin ilustración: la huella del icono sobre un fondo de piedra, con el mismo 4:3 que las fotos.
+   El selector img. le da más peso que .dino-ficha__imagen, que pone fondo blanco. */
+img.dino-imagen--icono {
+  padding: 12% 0;
+  object-fit: contain;
+  background-color: var(--dino-fondo);
+  box-shadow: inset 0 0 0 1px var(--dino-linea);
+}
+
+/* En móvil la imagen ocupa todo el ancho: el icono baja a 3:1 para no repetir 24 cuadros enormes */
+@media (max-width: 575.98px) {
+  img.dino-imagen--icono.dino-fila__imagen {
+    aspect-ratio: 3 / 1;
+    padding: 4% 0;
+  }
 }
 
 .dino-fila__cabecera {
@@ -324,6 +366,65 @@ a:hover {
 .dino-fila__accion {
   font-family: var(--dino-fuente-titulos);
   font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- Catálogo: paginación */
+.dino-paginacion {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  margin-top: 2rem;
+  font-family: var(--dino-fuente-titulos);
+}
+
+.dino-paginacion__resumen {
+  margin: 0;
+  color: var(--dino-texto-suave);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.dino-paginacion__lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.dino-paginacion__lista a,
+.dino-paginacion__lista span {
+  display: inline-block;
+  min-width: 2.5rem;
+  padding: 0.4rem 0.6rem;
+  text-align: center;
+}
+
+.dino-paginacion__lista a {
+  border: 1px solid var(--dino-linea);
+  background-color: var(--dino-superficie);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.dino-paginacion__lista a:hover {
+  border-color: var(--dino-texto);
+}
+
+.dino-paginacion__lista [aria-current="page"] {
+  border: 1px solid var(--dino-texto);
+  background-color: var(--dino-texto);
+  color: var(--dino-superficie);
+  font-weight: 700;
+}
+
+.dino-paginacion__hueco {
+  min-width: 1.5rem;
+  color: var(--dino-texto-suave);
 }
 
 .dino-vacio {
