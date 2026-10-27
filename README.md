@@ -9,12 +9,13 @@ El objetivo real del proyecto es **aprender a orquestar varias IAs** con un stac
 ## Funcionalidades
 
 - **1617 dinosaurios** importados de la [Paleobiology Database](https://paleobiodb.org/) (PBDB) con `dotnet run -- importar-pbdb`: edad, dieta y países de los fósiles de la PBDB, descripción de Wikipedia en español y nombres de países de Unicode CLDR. Contrato: `docs/pbdb-importacion.md`.
-- **Catálogo como columna estratigráfica:** ordenado del más reciente al más antiguo y agrupado por época con los colores oficiales de la Carta Cronoestratigráfica Internacional (ICS), del Cretácico Superior al Triásico Medio.
-- **Búsqueda, filtro y paginación:** por nombre (`LIKE`) y por periodo (Triásico, Jurásico o Cretácico, comparado por prefijo), 24 por página con `LIMIT/OFFSET`, en consultas parametrizadas con Dapper.
-- **Icono de huella:** los géneros sin foto muestran una huella fósil de tres dedos (`wwwroot/images/dinosaurios/icono.svg`).
-- **Ficha de cada especie:** periodo, antigüedad, región, dieta, descripción, imagen con su crédito y enlace a Wikipedia.
+- **Catálogo como columna estratigráfica:** ordenado del más reciente al más antiguo y agrupado por época con los colores oficiales de la Carta Cronoestratigráfica Internacional (ICS), del Cretácico Superior al Triásico Medio, con encabezados de estrato fijos (`sticky`) al desplazarse y una **escala proporcional del Mesozoico** (`nav.dino-escala`) para filtrar por periodo con un clic.
+- **Búsqueda, filtros y paginación:** por nombre (`LIKE`), por periodo (Triásico, Jurásico o Cretácico, comparado por prefijo), por dieta (Herbívoro, Carnívoro, Omnívoro o Piscívoro) y casilla «Solo con ilustración», 24 por página con `LIMIT/OFFSET`, en consultas parametrizadas con Dapper.
+- **Sello compacto para el icono de huella:** los géneros sin foto muestran una huella fósil de tres dedos (`wwwroot/images/dinosaurios/icono.svg`) en formato compacto (`64 px` en escritorio, `48 px` en móvil) para destacar las especies con fotografía propia (`220 px` `4:3`).
+- **Ficha de cada especie:** periodo, antigüedad, región, dieta, descripción, imagen con su crédito y enlace a Wikipedia o a la PBDB.
 - **Base local:** `DatabaseInitializer` crea `App_Data/dinosaurios.db` con `Data/schema.sql` y la llena con `Data/seed.sql` la primera vez.
 - **Diseño responsivo y accesible:** foco visible, `prefers-reduced-motion` y textos en español.
+- **Variante de interfaz con Google AI Studio:** existe una segunda versión de las vistas Razor con estética editorial de museo en [`Web_Dinosaurios_Razor_AIStudio`](https://github.com/DanielFalconGuerra/Web_Dinosaurios_Razor_AIStudio) (`D:/Daniel/Desarrollo/Web_Dinosaurios_Razor_AIStudio`).
 
 | Ficha | Móvil (375 px) |
 |---|---|
