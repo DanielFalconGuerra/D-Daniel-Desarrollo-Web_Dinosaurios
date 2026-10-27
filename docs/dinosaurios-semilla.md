@@ -20,6 +20,23 @@ exigen atribución, por eso `CreditoImagen` es obligatorio y debe mostrarse en l
 | `CreditoImagen` | `TEXT` | `NOT NULL` | `string CreditoImagen` |
 | `FuenteUrl` | `TEXT` | `NOT NULL` | `string FuenteUrl` |
 
+## Valores de `Periodo` y filtrado
+
+`Periodo` guarda la subdivisión completa, no solo el período. En los 8 registros solo hay dos valores:
+
+- `Cretácico Superior` (6 registros: Tyrannosaurus, Triceratops, Velociraptor, Spinosaurus, Ankylosaurus, Parasaurolophus)
+- `Jurásico Superior` (2 registros: Stegosaurus, Brachiosaurus)
+
+`DinosaurioRepository.BuscarAsync` compara el periodo **por prefijo** mediante
+`Periodo LIKE @Periodo || '%'`, de modo que valores como `Cretácico` o `Jurásico` devuelven
+todos los registros de esa subdivisión y el valor completo sigue funcionando. El `%` se añade
+en SQL, nunca se concatena texto del usuario: el valor viaja siempre como parámetro `@Periodo`
+(recortado y con `null` cuando llega vacío, en cuyo caso no se filtra).
+
+> [!note] Sensibilidad a mayúsculas y acentos
+> `LIKE` en SQLite ignora mayúsculas y minúsculas solo en el rango ASCII; los acentos sí importan.
+> El prefijo debe escribirse con la misma tilde que el dato (`Cretácico`, `Jurásico`).
+
 ## Registros
 
 ### 1. Tyrannosaurus rex

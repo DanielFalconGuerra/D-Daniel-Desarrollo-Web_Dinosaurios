@@ -39,6 +39,9 @@ public class DinosaurioRepository : IDinosaurioRepository
         WHERE Id = @Id;
         """;
 
+    // El periodo se guarda con su subdivisión («Cretácico Superior», «Jurásico Superior»).
+    // Se compara por prefijo en SQL (@Periodo || '%') para que «Cretácico» encuentre
+    // «Cretácico Superior», sin concatenar nunca texto del usuario en la sentencia.
     private const string SqlBuscar = """
         SELECT Id,
                Nombre,
@@ -52,7 +55,7 @@ public class DinosaurioRepository : IDinosaurioRepository
                FuenteUrl
         FROM Dinosaurios
         WHERE (@Nombre IS NULL OR Nombre LIKE '%' || @Nombre || '%')
-          AND (@Periodo IS NULL OR Periodo = @Periodo)
+          AND (@Periodo IS NULL OR Periodo LIKE @Periodo || '%')
         ORDER BY Nombre;
         """;
 
