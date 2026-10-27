@@ -8,8 +8,8 @@ namespace Web_Dinosaurios.Services;
 /// <summary>
 /// Importa el catálogo de dinosaurios desde la Paleobiology Database (PBDB) y
 /// Wikipedia. Solo se invoca desde <c>dotnet run -- importar-pbdb</c>; nunca al
-/// arrancar la web. Implementa las reglas de la sección 4 de
-/// <c>docs/pbdb-importacion.md</c>.
+/// arrancar la web. Implementa las reglas de la sección 4 y de la regla 3 de la
+/// sección 6 de <c>docs/pbdb-importacion.md</c>.
 /// </summary>
 /// <remarks>
 /// Orden de operaciones:
@@ -19,7 +19,10 @@ namespace Web_Dinosaurios.Services;
 ///   <item>Pedir los países por género a PBDB.</item>
 ///   <item>Pedir los resúmenes a Wikipedia en lotes de 20.</item>
 ///   <item>Mapear cada candidato a <see cref="Dinosaurio"/> con <see cref="MapeadorPbdb"/>.</item>
-///   <item>Insertar todo en una sola transacción, omitiendo los géneros ya presentes.</item>
+///   <item>
+///     En una sola transacción: refrescar (<c>UPDATE … WHERE PbdbId = @PbdbId</c>) los géneros
+///     ya importados y insertar los nuevos, omitiendo los que ya existen por nombre.
+///   </item>
 /// </list>
 /// Si una API falla antes de abrir la transacción no se inserta nada; si falla
 /// dentro de la transacción se hace rollback y se re-lanza la excepción.
@@ -91,9 +94,10 @@ public sealed class ImportadorPbdb
             }
         }
 
-        // 6. Insertar en una sola transacción, omitiendo los géneros ya presentes.
+        // 6. Refrescar lo ya importado e insertar lo nuevo, en una sola transacción.
         var omitidos = 0;
         var insertados = 0;
+        var actualizados = 0;
         var insertadosConWikipedia = 0;
 
         using var conexion = _conexiones.CrearConexion();
@@ -105,6 +109,17 @@ public sealed class ImportadorPbdb
         using var transaccion = conexion.BeginTransaction();
         try
         {
+            // Regla 3 de la sección 6: los géneros con PbdbId existente actualizan su
+            // descripción y su fuente. El WHERE compara contra un valor no nulo, así que
+            // las 8 filas semilla (PbdbId NULL) nunca se tocan. Si el UPDATE no alcanza
+            // ninguna fila, el género es nuevo y sigue el camino de inserción.
+            const string sqlActualizar = """
+                UPDATE Dinosaurios
+                   SET Descripcion = @Descripcion,
+                       FuenteUrl = @FuenteUrl
+                 WHERE PbdbId = @PbdbId
+                """;
+
             // Se omite un género si ya existe una fila con su nombre exacto
             // o con un nombre que empiece por él seguido de un espacio
             // (p. ej. 'Tyrannosaurus rex' impide insertar 'Tyrannosaurus').
@@ -123,6 +138,23 @@ public sealed class ImportadorPbdb
 
             foreach (var dino in nuevos)
             {
+                // 6.1 Refrescar la fila importada anteriormente con el mismo PbdbId.
+                if (dino.PbdbId is int pbdbId)
+                {
+                    var refrescadas = await conexion.ExecuteAsync(
+                        sqlActualizar,
+                        new { dino.Descripcion, dino.FuenteUrl, PbdbId = pbdbId },
+                        transaccion);
+
+                    if (refrescadas > 0)
+                    {
+                        actualizados++;
+                        continue;
+                    }
+                }
+
+                // 6.2 Omitir los géneros que ya están en el catálogo por nombre
+                //     (incluidos los 8 registros semilla, cuya fila no se modifica).
                 var existentes = await conexion.ExecuteScalarAsync<long>(
                     sqlExiste, new { dino.Nombre }, transaccion);
 
@@ -132,8 +164,9 @@ public sealed class ImportadorPbdb
                     continue;
                 }
 
-                // INSERT OR IGNORE protege además contra los índices únicos
-                // (PbdbId y Nombre): cualquier colisión se cuenta como omitido.
+                // 6.3 Insertar los géneros nuevos. INSERT OR IGNORE protege además
+                //     contra los índices únicos (PbdbId y Nombre): cualquier colisión
+                //     se cuenta como omitido.
                 var filas = await conexion.ExecuteAsync(sqlInsertar, dino, transaccion);
 
                 if (filas > 0)
@@ -167,13 +200,14 @@ public sealed class ImportadorPbdb
             throw;
         }
 
-        // 7. Resumen de la sección 4 del contrato.
+        // 7. Resumen de las secciones 4 y 6 del contrato.
         Console.WriteLine();
         Console.WriteLine("=== Resumen de la importación PBDB ===");
         Console.WriteLine($"Géneros recibidos:                          {recibidos}");
         Console.WriteLine($"Descartados (sin fea o fea <= 66):          {descartados}");
         Console.WriteLine($"Omitidos por ya existir:                     {omitidos}");
         Console.WriteLine($"Insertados:                                 {insertados}");
+        Console.WriteLine($"Actualizados:                               {actualizados}");
         Console.WriteLine($"Con descripción de Wikipedia:               {insertadosConWikipedia}");
         Console.WriteLine();
 
