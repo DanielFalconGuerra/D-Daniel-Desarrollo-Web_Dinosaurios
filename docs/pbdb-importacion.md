@@ -12,7 +12,8 @@ el 2026-10-27. **Documento de solo lectura:** se envía como referencia; no lo m
 | Descripción (2 frases) | API de Wikipedia en español (`prop=extracts`) | CC BY-SA 4.0 |
 | Nombres de países en español | `Data/paises-es.json` (generado de Unicode CLDR 46) | Unicode License |
 
-Ninguna API pide clave. Las tres se llaman **solo** al ejecutar `dotnet run -- importar-pbdb`, nunca al arrancar la web.
+Ninguna API pide clave, pero la PBDB y Wikipedia responden 403 sin cabecera `User-Agent`: todas las llamadas
+envían `User-Agent: Web_Dinosaurios/1.0 (https://github.com/DanielFalconGuerra/D-Daniel-Desarrollo-Web_Dinosaurios)`. Las tres se llaman **solo** al ejecutar `dotnet run -- importar-pbdb`, nunca al arrancar la web.
 
 ## 2. Llamadas
 
@@ -49,7 +50,8 @@ Agrupar por `gnl` (género) el conjunto de `cc2` (código de país). El 90 % de 
 GET https://es.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exintro=1&explaintext=1&exsentences=2&exlimit=20&redirects=1&titles=Género1|Género2|…
 ```
 
-- Cabecera obligatoria `User-Agent: Web_Dinosaurios/1.0 (proyecto de aprendizaje)`; sin ella Wikipedia rechaza la llamada.
+- Cabecera `User-Agent` con la URL del repositorio, como pide la política de Wikimedia; con un agente genérico Wikipedia responde 429.
+- Ante un 429, esperar lo que indique `Retry-After` (5 s si no viene) y reintentar hasta 3 veces.
 - Esperar 250 ms entre lotes.
 - Las redirecciones llegan en `query.redirects` (`from` → `to`) y las normalizaciones en `query.normalized`;
   usarlas para volver del título final al género pedido.
@@ -106,3 +108,30 @@ Columnas nuevas (`ALTER TABLE` en bases existentes y en `schema.sql` para bases 
 - Orden: `EdadMaxMa` ascendente (el más reciente primero, como los estratos), luego `Nombre`; los `NULL` al final.
 - 24 especies por página; el número de página llega por query string (`?pagina=2`) y se conserva junto con los filtros.
 - `Triásico` se agrega a los periodos válidos del filtro (que compara por prefijo).
+
+## 6. Calidad de las descripciones (Paso 7)
+
+La primera importación (2026-10-27) dejó dos defectos en los extractos de Wikipedia:
+
+- **Artículo equivocado (~30 géneros):** el nombre coincide con otro tema. Ejemplos: `Thanos` (personaje de Marvel),
+  `Niebla` (fenómeno meteorológico), `Yulong` (condado chino), `Balaur` y `Kurupi` (criaturas del folclore),
+  `Moros` y `Yi` (páginas de desambiguación).
+- **Extracto cortado (21 géneros):** `exsentences=2` corta en las abreviaturas, como en
+  «Concavenator corcovatus (lat.» o «Calamosaurus foxi (gr. "lagarto quilla del rev.».
+
+Reglas nuevas:
+
+1. **Sin `exsentences`:** pedir solo `exintro=1&explaintext=1` y recortar en C# (clase estática
+   `Services/TextoWikipedia.cs`, sin red):
+   - Un punto cierra una frase solo si **no hay paréntesis ni comillas abiertos** en ese punto y lo sigue un espacio y
+     una mayúscula, o el final del texto.
+   - Quedarse con las 2 primeras frases. Si pasan de 400 caracteres, cortar en el último espacio antes de 400 y
+     terminar con «…».
+2. **Validar el tema:** aceptar el extracto solo si contiene, sin distinguir mayúsculas ni acentos, alguna de estas
+   raíces: `dinosaur`, `teropod`, `sauropod`, `ornitopod`, `ornitisqui`, `saurisqui`, `arcosaur`, `fosil`, `extint`.
+   Si no, el género queda como **sin artículo** (descripción de reserva y enlace a la PBDB, §3).
+   Casos de prueba: se rechazan `Thanos`, `Niebla`, `Yulong`, `Balaur`, `Kurupi`, `Laelaps`, `Mahakala`;
+   se aceptan `Herrerasaurus`, `Microraptor`, `Allosaurus`.
+3. **Refrescar lo importado:** al volver a ejecutar `dotnet run -- importar-pbdb`, las filas con `PbdbId` existente
+   actualizan `Descripcion` y `FuenteUrl` (`UPDATE … WHERE PbdbId = @PbdbId`) en la misma transacción. Las 8 filas
+   semilla (`PbdbId NULL`) nunca se tocan. El resumen agrega la línea «Actualizados».

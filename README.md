@@ -8,8 +8,10 @@ El objetivo real del proyecto es **aprender a orquestar varias IAs** con un stac
 
 ## Funcionalidades
 
-- **Catálogo como columna estratigráfica:** las 8 especies se agrupan por periodo con los colores oficiales de la Carta Cronoestratigráfica Internacional (ICS); el estrato más reciente va arriba.
-- **Búsqueda y filtro:** por nombre (`LIKE`) y por periodo (Jurásico o Cretácico, comparado por prefijo), en una sola consulta parametrizada con Dapper.
+- **1617 dinosaurios** importados de la [Paleobiology Database](https://paleobiodb.org/) (PBDB) con `dotnet run -- importar-pbdb`: edad, dieta y países de los fósiles de la PBDB, descripción de Wikipedia en español y nombres de países de Unicode CLDR. Contrato: `docs/pbdb-importacion.md`.
+- **Catálogo como columna estratigráfica:** ordenado del más reciente al más antiguo y agrupado por época con los colores oficiales de la Carta Cronoestratigráfica Internacional (ICS), del Cretácico Superior al Triásico Medio.
+- **Búsqueda, filtro y paginación:** por nombre (`LIKE`) y por periodo (Triásico, Jurásico o Cretácico, comparado por prefijo), 24 por página con `LIMIT/OFFSET`, en consultas parametrizadas con Dapper.
+- **Icono de huella:** los géneros sin foto muestran una huella fósil de tres dedos (`wwwroot/images/dinosaurios/icono.svg`).
 - **Ficha de cada especie:** periodo, antigüedad, región, dieta, descripción, imagen con su crédito y enlace a Wikipedia.
 - **Base local:** `DatabaseInitializer` crea `App_Data/dinosaurios.db` con `Data/schema.sql` y la llena con `Data/seed.sql` la primera vez.
 - **Diseño responsivo y accesible:** foco visible, `prefers-reduced-motion` y textos en español.
@@ -48,13 +50,16 @@ Web_Dinosaurios/
 ├── Controllers/DinosauriosController.cs  # Index (búsqueda) y Detalle
 ├── Models/Dinosaurio.cs
 ├── Repositories/                # IDinosaurioRepository y DinosaurioRepository (Dapper)
-├── Data/                        # fábrica de conexiones, inicializador, schema.sql y seed.sql
+├── Data/                        # fábrica de conexiones, inicializador, schema.sql, seed.sql y paises-es.json
+├── Services/                    # PbdbCliente, WikipediaCliente, MapeadorPbdb e ImportadorPbdb
+├── Helpers/Presentacion.cs      # clases de periodo y época, icono y textos compartidos por las vistas
 ├── Views/Dinosaurios/           # Index.cshtml y Detalle.cshtml
 ├── wwwroot/css/site.css         # tokens y estilos dino-* de la guía de UI
-├── wwwroot/images/dinosaurios/  # imágenes de Wikimedia Commons
+├── wwwroot/images/dinosaurios/  # imágenes de Wikimedia Commons e icono.svg
 └── docs/
     ├── dinosaurios-semilla.md   # contrato de datos: esquema y 8 registros semilla
     ├── guia-ui.md               # contrato visual: tokens, tipografía y layout
+    ├── pbdb-importacion.md      # contrato de la importación desde la PBDB
     └── capturas/                # capturas del README
 ```
 
@@ -64,6 +69,7 @@ Requisitos: SDK de .NET 8 o superior (el proyecto apunta a `net8.0`), Python 3, 
 
 ```powershell
 dotnet run                      # http://localhost:5288
+dotnet run -- importar-pbdb     # llena la base desde la PBDB y Wikipedia (~1 min; repetible)
 
 # Orquestador
 pip install openai python-dotenv
@@ -87,6 +93,7 @@ Documentación del proyecto: `D:/Daniel/Obsidian/Data/00_Human/02_Second_Brain/S
 
 ## Créditos
 
+- **Datos:** [Paleobiology Database](https://paleobiodb.org/), licencia CC BY 4.0. Nombres de países: Unicode CLDR 46.
 - **Imágenes:** Wikimedia Commons bajo licencias CC BY y CC BY-SA. El autor y la licencia de cada una están en `docs/dinosaurios-semilla.md` (campo `CreditoImagen`) y se muestran en la ficha.
-- **Textos:** basados en los artículos de Wikipedia en español (consultados el 2026-10-26).
+- **Textos:** extractos de Wikipedia en español (CC BY-SA 4.0), consultados el 2026-10-27.
 - **Skill `frontend-design`:** [anthropics/skills](https://github.com/anthropics/skills), licencia Apache 2.0.
