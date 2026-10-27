@@ -2,6 +2,7 @@
 
 Contrato visual para las vistas Razor. Creada con la skill `frontend-design` (`.claude/skills/frontend-design/`).
 Toda tarea de vistas o CSS debe seguirla; si algo no está aquí, usa Bootstrap 5 sin adornos.
+**Documento de solo lectura:** se envía como referencia; no lo modifiques ni lo devuelvas en tu respuesta.
 
 ## 1. Brief
 
