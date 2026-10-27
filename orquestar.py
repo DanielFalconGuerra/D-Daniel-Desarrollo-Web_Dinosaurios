@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-orquestar.py — Orquestador mínimo: Claude (arquitecto/revisor) + DeepSeek (implementador) + Antigravity (documentador)
+orquestar.py — Orquestador mínimo: Claude (orquestador/diseñador) + DeepSeek (funcionalidad) + Antigravity (documentador)
 
 Flujo:
   (planear)     -> Claude lee la nota del proyecto y agrega tareas pequeñas a tareas.md
-  (implementar) -> DeepSeek escribe el código -> Claude revisa el git diff
+  (implementar) -> DeepSeek escribe el código de funcionalidad -> Claude revisa el git diff
                    -> si RECHAZA, DeepSeek corrige (máx. MAX_REINTENTOS)
                    -> si APRUEBA, commit + handoff para Antigravity
+  (disenar)     -> se detiene: vistas y CSS los hace Claude Code en una sesión interactiva
   (documentar)  -> genera un handoff .md en tu bóveda para que Antigravity actualice la nota
 
 Formato de tareas.md:
@@ -370,8 +371,15 @@ def documentar(t):
     marcar(t)
 
 
+def disenar(t):
+    # El diseño necesita ver la app (capturas, varios anchos): no cabe en una llamada sin interfaz
+    log("  Tarea de diseño: pídesela a Claude Code (diseñador) en una sesión interactiva.")
+    log("  Cuando quede commiteada, márcala con [x] en tareas.md y vuelve a ejecutar el orquestador.")
+    sys.exit(0)
+
+
 # ---------------------------------------------------------------- main
-ROLES = {"planear": planear, "implementar": implementar, "documentar": documentar}
+ROLES = {"planear": planear, "implementar": implementar, "disenar": disenar, "documentar": documentar}
 
 
 def main():

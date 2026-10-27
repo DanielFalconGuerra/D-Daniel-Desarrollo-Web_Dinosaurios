@@ -6,9 +6,11 @@ El objetivo real del proyecto es **aprender a orquestar varias IAs** con un stac
 
 | Rol | Agente | Qué hace |
 |---|---|---|
-| Orquestador / revisor | Claude Code | Divide objetivos en tareas (`planear`) y aprueba o rechaza cada `git diff` |
-| Desarrollador | DeepSeek | Escribe los archivos completos de cada tarea `implementar` |
-| Documentador | Agy (Antigravity) | Procesa los handoffs y actualiza las notas del proyecto en el Second Brain |
+| Orquestador y diseñador | Claude Code | Divide objetivos en tareas (`planear`), aprueba o rechaza cada `git diff` y hace las vistas y el CSS (`disenar`) según `docs/guia-ui.md` |
+| Desarrollador de funcionalidad | DeepSeek | Escribe modelos, repositorios, controladores y SQL en las tareas `implementar` |
+| Especialista en documentación | Agy (Antigravity) | Procesa los handoffs y actualiza las notas del proyecto en el Second Brain |
+
+Las tareas de diseño (`disenar`) detienen el orquestador: necesitan ver la app a varios anchos, así que Claude Code las hace en una sesión interactiva con la skill `frontend-design` (`.claude/skills/`).
 
 ## Estructura inicial
 
@@ -18,6 +20,7 @@ Web_Dinosaurios/
 ├── tareas.md                  # cola de tareas (no se versiona)
 ├── .env.example               # configuración del orquestador (copiar a .env)
 ├── docs/dinosaurios-semilla.md  # contrato de datos: esquema y 8 registros semilla
+├── docs/guia-ui.md            # contrato visual: tokens, tipografía y layout
 ├── wwwroot/images/dinosaurios/  # imágenes de Wikimedia Commons (ver créditos en docs/)
 └── (plantilla dotnet new mvc)
 ```
