@@ -284,6 +284,10 @@ Tarea: {t['desc']}{rutas}"""
         log(f"  Archivos escritos: {', '.join(escritos)}")
 
         errores = verificar()
+        if errores and any(s in errores for s in ("MSB3027", "MSB3021", "being used by another process")):
+            # No es un error del código: la app sigue abierta y bloquea los binarios
+            log("  ✘ El build no puede escribir los binarios: cierra `dotnet run` y repite la tarea.")
+            break
         if errores:
             log(f"  ✘ {VERIFICAR_CMD} falló (no se gasta revisión de Claude):\n{errores[-800:]}")
             comentarios = f"\n\nTu versión anterior no pasa `{VERIFICAR_CMD}`. Corrige estos errores:\n{errores}"
@@ -379,6 +383,10 @@ def main():
             break
         t = pendientes[0]
         log(f"→ ({t['tipo']}) {t['desc']}")
+        if not args.dry_run and git("status", "--porcelain", check=False).strip():
+            # Cambios sin commit (p. ej. de una tarea [!]) entrarían al diff de la siguiente tarea
+            log("  Hay cambios sin commit en el proyecto. Revísalos y haz commit o descártalos antes de seguir.")
+            break
         if args.dry_run:
             for p in pendientes:
                 print(f"   ({p['tipo']}) {p['desc']}  archivos={p['archivos']}")
