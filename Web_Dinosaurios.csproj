@@ -13,6 +13,10 @@
 
   <ItemGroup>
     <Content Include="Data\*.sql" CopyToOutputDirectory="PreserveNewest" />
+    <!-- El SDK web ya incluye **\*.json como Content: se reemplaza para que Data/paises-es.json
+         se copie al directorio de salida y MapeadorPbdb pueda leerlo desde AppContext.BaseDirectory. -->
+    <Content Remove="Data\*.json" />
+    <Content Include="Data\*.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
