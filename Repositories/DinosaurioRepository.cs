@@ -56,7 +56,18 @@ public class DinosaurioRepository : IDinosaurioRepository
         FROM Dinosaurios
         WHERE (@Nombre IS NULL OR Nombre LIKE '%' || @Nombre || '%')
           AND (@Periodo IS NULL OR Periodo LIKE @Periodo || '%')
-        ORDER BY Nombre;
+        ORDER BY EdadMaxMa IS NULL,
+                 EdadMaxMa ASC,
+                 Nombre ASC
+        LIMIT @Tamano OFFSET @Desplazamiento;
+        """;
+
+    // Mismo WHERE que SqlBuscar para que el total coincida con la página devuelta.
+    private const string SqlContar = """
+        SELECT COUNT(*)
+        FROM Dinosaurios
+        WHERE (@Nombre IS NULL OR Nombre LIKE '%' || @Nombre || '%')
+          AND (@Periodo IS NULL OR Periodo LIKE @Periodo || '%');
         """;
 
     private readonly IDbConnectionFactory _connectionFactory;
@@ -89,18 +100,36 @@ public class DinosaurioRepository : IDinosaurioRepository
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<Dinosaurio>> BuscarAsync(string? nombre, string? periodo)
+    public async Task<(IReadOnlyList<Dinosaurio> Elementos, int Total)> BuscarAsync(
+        string? nombre,
+        string? periodo,
+        int pagina,
+        int tamano)
     {
+        if (pagina < 1)
+        {
+            pagina = 1;
+        }
+
+        if (tamano < 1)
+        {
+            tamano = 1;
+        }
+
         using var connection = _connectionFactory.CrearConexion();
 
         var parametros = new
         {
             Nombre = string.IsNullOrWhiteSpace(nombre) ? null : nombre.Trim(),
-            Periodo = string.IsNullOrWhiteSpace(periodo) ? null : periodo.Trim()
+            Periodo = string.IsNullOrWhiteSpace(periodo) ? null : periodo.Trim(),
+            Tamano = tamano,
+            Desplazamiento = (long)(pagina - 1) * tamano
         };
+
+        int total = await connection.ExecuteScalarAsync<int>(SqlContar, parametros);
 
         var dinosaurios = await connection.QueryAsync<Dinosaurio>(SqlBuscar, parametros);
 
-        return dinosaurios.AsList();
+        return (dinosaurios.AsList(), total);
     }
 }

@@ -10,9 +10,14 @@ namespace Web_Dinosaurios.Controllers;
 public class DinosauriosController : Controller
 {
     /// <summary>
+    /// Cantidad de dinosaurios que se muestran por página.
+    /// </summary>
+    private const int TamanoPagina = 24;
+
+    /// <summary>
     /// Periodos geológicos admitidos por el filtro del catálogo.
     /// </summary>
-    private static readonly string[] PeriodosValidos = { "Jurásico", "Cretácico" };
+    private static readonly string[] PeriodosValidos = { "Triásico", "Jurásico", "Cretácico" };
 
     private readonly IDinosaurioRepository _repository;
 
@@ -22,23 +27,37 @@ public class DinosauriosController : Controller
     }
 
     /// <summary>
-    /// GET: /Dinosaurios?nombre=...&amp;periodo=...
-    /// Muestra el listado del catálogo aplicando los filtros opcionales.
+    /// GET: /Dinosaurios?nombre=...&amp;periodo=...&amp;pagina=2
+    /// Muestra el listado del catálogo aplicando los filtros opcionales y la paginación.
     /// </summary>
     /// <param name="nombre">Texto de búsqueda por nombre; se recorta y se ignora si está vacío.</param>
-    /// <param name="periodo">Periodo geológico; solo se aceptan «Jurásico» y «Cretácico».</param>
-    public async Task<IActionResult> Index(string? nombre, string? periodo)
+    /// <param name="periodo">Periodo geológico; solo se aceptan «Triásico», «Jurásico» y «Cretácico».</param>
+    /// <param name="pagina">Número de página solicitado, empezando en 1.</param>
+    public async Task<IActionResult> Index(string? nombre, string? periodo, int pagina = 1)
     {
         nombre = NormalizarTexto(nombre);
         periodo = NormalizarPeriodo(periodo);
 
-        IReadOnlyList<Dinosaurio> dinosaurios = await _repository.BuscarAsync(nombre, periodo);
+        if (pagina < 1)
+        {
+            pagina = 1;
+        }
+
+        (IReadOnlyList<Dinosaurio> elementos, int total) =
+            await _repository.BuscarAsync(nombre, periodo, pagina, TamanoPagina);
+
+        int totalPaginas = total == 0
+            ? 1
+            : (int)Math.Ceiling(total / (double)TamanoPagina);
 
         ViewData["NombreActual"] = nombre;
         ViewData["PeriodoActual"] = periodo;
         ViewData["PeriodosValidos"] = PeriodosValidos;
+        ViewData["Pagina"] = pagina;
+        ViewData["TotalPaginas"] = totalPaginas;
+        ViewData["Total"] = total;
 
-        return View(dinosaurios);
+        return View(elementos);
     }
 
     /// <summary>
