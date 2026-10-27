@@ -1,5 +1,6 @@
 using Web_Dinosaurios.Data;
 using Web_Dinosaurios.Repositories;
+using Web_Dinosaurios.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,12 @@ builder.Services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>();
 
 // Repositorios (una instancia por petición).
 builder.Services.AddScoped<IDinosaurioRepository, DinosaurioRepository>();
+
+// Cliente HTTP tipado de la Paleobiology Database (importación del catálogo).
+builder.Services.AddHttpClient<PbdbCliente>(cliente =>
+{
+    cliente.Timeout = TimeSpan.FromSeconds(120);
+});
 
 var app = builder.Build();
 
